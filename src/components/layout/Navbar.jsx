@@ -38,7 +38,7 @@ const Navbar = () => (
             Dashboard
           </Link>
         </div>
-        <div className="xl:hidden text-xs uppercase tracking-[0.2em]">Menu</div>
+        {/* <div className="xl:hidden text-xs uppercase tracking-[0.2em]">Menu</div> */}
       </div>
     </div>
   </header>
