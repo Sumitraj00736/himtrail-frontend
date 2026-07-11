@@ -6,6 +6,8 @@ import Sustainability from '../components/Sustainability';
 import DepartingSoonTable from '../components/DepartingSoonTable';
 import BestSellers from '../components/BestSellers';
 import FeaturedTrips from '../components/FeaturedTrips';
+import TrekkingInNepal from '../components/TrekkingInNepal';
+import LuxuryTravel from '../components/LuxuryTravel';
 import AboutCompany from '../components/AboutCompany';
 import Reviews from '../components/Reviews';
 import { fetchTrips } from '../features/trips/tripsSlice';
@@ -18,35 +20,41 @@ const Home = () => {
     dispatch(fetchTrips());
   }, [dispatch]);
 
-  const featured = items.slice(0, 3);
+  const featured = items.filter(trip => trip.displaySections?.includes('Featured')).slice(0, 3);
 
   return (
     <div>
       <Hero />
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-forest-600">
-              Curated for 2026
-            </p>
-            <h2 className="section-title mt-3">Featured Journeys</h2>
-          </div>
+      
+      {/* Featured Journeys Section */}
+      <section className="reveal reveal-up max-w-6xl mx-auto px-6 py-20">
+        <div className="text-center md:text-left mb-12">
+          <p className="text-xs uppercase font-bold tracking-[0.25em] text-sunrise-500">
+            Curated for 2026
+          </p>
+          <h2 className="section-title mt-3 text-slate-800 font-display">Featured Journeys</h2>
+          <p className="text-slate-500 text-sm mt-2">Handpicked adventures across the majestic Himalayas and beyond.</p>
         </div>
-        <div className="mt-8 grid md:grid-cols-3 gap-6">
+        
+        <div className="grid md:grid-cols-3 gap-8">
           {featured.map((trip) => (
-            <TripCard key={trip._id} trip={trip} />
+            <div key={trip._id}>
+              <TripCard trip={trip} />
+            </div>
           ))}
           {featured.length === 0 && (
-            <div className="col-span-full text-forest-600">
-              Add your first trips in the admin panel to showcase featured
-              journeys.
+            <div className="col-span-full text-center py-12 text-slate-400 bg-white border border-slate-100 rounded-3xl">
+              Add your first trips in the admin panel to showcase featured journeys.
             </div>
           )}
         </div>
       </section>
+
       <DepartingSoonTable />
       <BestSellers />
+      <TrekkingInNepal />
       <FeaturedTrips />
+      <LuxuryTravel />
       <AboutCompany />
       <Reviews />
       <Sustainability />

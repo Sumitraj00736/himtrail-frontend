@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import { Link } from 'react-router-dom';
 
-const FeaturedTripsAdmin = () => {
+const TrekkingNepalAdmin = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     try {
-      const res = await api.get('/content/featured-trips');
+      const res = await api.get('/content/trekking-in-nepal');
       setItems(res.data.data);
     } catch (err) {
       console.error(err);
@@ -25,9 +25,9 @@ const FeaturedTripsAdmin = () => {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Featured Trips Overview</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Trekking in Nepal Overview</h1>
           <p className="text-slate-500 mt-1">
-            These trips are currently displayed in the "Featured Trips" section on the homepage.
+            These trips are currently displayed in the "Trekking in Nepal" section on the homepage.
           </p>
         </div>
         <Link 
@@ -42,7 +42,7 @@ const FeaturedTripsAdmin = () => {
         <div className="text-slate-400 font-medium">Loading preview...</div>
       ) : items.length === 0 ? (
         <div className="bg-slate-50 border border-slate-200 border-dashed rounded-3xl p-12 text-center">
-          <p className="text-slate-500 mb-4">No trips are currently marked as Featured.</p>
+          <p className="text-slate-500 mb-4">No trips are currently marked as Trekking in Nepal.</p>
           <Link to="/dashboard/trips" className="text-brand font-semibold hover:underline">
             Go tag some trips!
           </Link>
@@ -74,4 +74,4 @@ const FeaturedTripsAdmin = () => {
   );
 };
 
-export default FeaturedTripsAdmin;
+export default TrekkingNepalAdmin;

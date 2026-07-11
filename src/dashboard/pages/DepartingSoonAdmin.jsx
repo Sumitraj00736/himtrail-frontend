@@ -1,62 +1,61 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
+import { Link } from 'react-router-dom';
 
 const DepartingSoonAdmin = () => {
   const [items, setItems] = useState([]);
-  const [form, setForm] = useState({
-    tripName: '',
-    startDate: '',
-    endDate: '',
-    status: 'Guaranteed',
-    price: 'US$0',
-    order: 0,
-  });
-
-  const load = async () => {
-    const res = await api.get('/dashboard/departing-soon');
-    setItems(res.data.data);
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    load();
+    api.get('/content/departing-soon')
+      .then((res) => setItems(res.data.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
-
-  const create = async (e) => {
-    e.preventDefault();
-    await api.post('/dashboard/departing-soon', form);
-    setForm({ tripName: '', startDate: '', endDate: '', status: 'Guaranteed', price: 'US$0', order: 0 });
-    load();
-  };
-
-  const remove = async (id) => {
-    await api.delete(`/dashboard/departing-soon/${id}`);
-    load();
-  };
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-[#243b75]">Departing Soon</h1>
-      <form onSubmit={create} className="mt-4 grid gap-3 max-w-xl">
-        <input className="rounded-full border-slate-200" placeholder="Trip name" value={form.tripName} onChange={(e) => setForm({ ...form, tripName: e.target.value })} />
-        <input className="rounded-full border-slate-200" placeholder="Start date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
-        <input className="rounded-full border-slate-200" placeholder="End date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
-        <input className="rounded-full border-slate-200" placeholder="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} />
-        <input className="rounded-full border-slate-200" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-        <input className="rounded-full border-slate-200" type="number" placeholder="Order" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} />
-        <button className="py-3 rounded-full bg-[#243b75] text-white" type="submit">Add Row</button>
-      </form>
-
-      <div className="mt-6 space-y-3">
-        {items.map((item) => (
-          <div key={item._id} className="border rounded-xl p-4">
-            <div className="font-semibold">{item.tripName}</div>
-            <div className="text-sm text-slate-500">{item.startDate} - {item.endDate}</div>
-            <button className="mt-2 text-xs text-red-500" onClick={() => remove(item._id)}>
-              Delete
-            </button>
-          </div>
-        ))}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Departing Soon Overview</h1>
+          <p className="text-slate-500 mt-1">Trips currently marked as "Departing Soon" on the homepage.</p>
+        </div>
+        <Link to="/dashboard/trips" className="px-5 py-2.5 bg-brand text-white text-sm font-semibold rounded-full shadow-md shadow-brand/20 hover:-translate-y-0.5 transition-all duration-300">
+          Manage in Trips Database
+        </Link>
       </div>
+
+      {loading ? (
+        <div className="text-slate-400 font-medium">Loading preview...</div>
+      ) : items.length === 0 ? (
+        <div className="bg-slate-50 border border-slate-200 border-dashed rounded-3xl p-12 text-center">
+          <p className="text-slate-500 mb-4">No trips are currently marked as Departing Soon.</p>
+          <Link to="/dashboard/trips" className="text-brand font-semibold hover:underline">Go tag some trips!</Link>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          {items.map((item) => (
+            <div key={item._id} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div className="relative h-40 rounded-xl overflow-hidden bg-slate-100 mb-4">
+                {item.heroImage ? (
+                  <img src={item.heroImage} alt={item.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-slate-300 text-4xl">🏔️</div>
+                )}
+                <div className="absolute top-3 left-3 bg-emerald-500 text-white px-2.5 py-1 rounded-md text-[10px] font-bold shadow-sm">
+                  Departing Soon
+                </div>
+              </div>
+              <h3 className="font-bold text-slate-800 text-base leading-snug line-clamp-2">{item.title}</h3>
+              <div className="mt-2 text-xs text-slate-500 font-medium">{item.duration} Days · {item.region}</div>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-brand font-bold">${item.price}</span>
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{item.destination}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

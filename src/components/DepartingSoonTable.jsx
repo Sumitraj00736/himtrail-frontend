@@ -11,56 +11,96 @@ const DepartingSoonTable = () => {
     });
   }, []);
 
+  const getStatusStyle = (status) => {
+    const s = status?.toLowerCase() || '';
+    if (s.includes('guaranteed')) return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+    if (s.includes('limited') || s.includes('fast')) return 'bg-amber-50 text-amber-700 border-amber-100';
+    return 'bg-blue-50 text-blue-700 border-blue-100';
+  };
+
   return (
-    <section className="bg-slate-50">
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#e6efff] text-[#243b75] flex items-center justify-center text-2xl">
-              🗓
+    <section className="reveal reveal-up bg-slate-50/75 border-y border-slate-100">
+      <div className="max-w-6xl mx-auto px-6 py-20">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sunrise-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-sunrise-500"></span>
+              </span>
+              <p className="text-xs uppercase font-bold tracking-[0.25em] text-sunrise-500">
+                DEPARTING SOON!
+              </p>
             </div>
-            <div>
-              <p className="text-[#243b75] text-2xl font-semibold">DEPARTING SOON!</p>
-              <p className="text-sm text-slate-500">Exclusive Deals 2026/27</p>
-            </div>
+            <h2 className="section-title mt-3 text-slate-800 font-display">Guaranteed Departures</h2>
+            <p className="text-sm text-slate-500 mt-2">Grab last-minute availability on upcoming treks with locked-in prices.</p>
           </div>
           <Link
             to="/trips"
-            className="px-6 py-3 rounded-full border border-sunrise-500 text-sunrise-500 font-semibold inline-flex items-center gap-2"
+            className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 self-start md:self-auto hover:-translate-y-0.5"
           >
-            Explore more →
+            Explore all departures →
           </Link>
         </div>
 
-        <div className="mt-10 bg-white rounded-2xl shadow-sm border">
-          <div className="grid grid-cols-12 px-6 py-4 text-sm text-slate-500 font-semibold">
-            <div className="col-span-4">Trip Name</div>
-            <div className="col-span-4">Departure Date</div>
-            <div className="col-span-2">Trip Status</div>
-            <div className="col-span-1">Price</div>
-            <div className="col-span-1"></div>
-          </div>
-          {rows.map((row) => (
-            <div
-              key={row._id}
-              className="grid grid-cols-12 px-6 py-5 border-t text-sm text-slate-700 items-center"
-            >
-              <div className="col-span-4 font-semibold">{row.tripName}</div>
-              <div className="col-span-4">{row.startDate} - {row.endDate}</div>
-              <div className="col-span-2 text-forest-800 font-semibold">
-                {row.status}
-              </div>
-              <div className="col-span-1 font-semibold">{row.price}</div>
-              <div className="col-span-1">
-                <Link
-                  to="/booking"
-                  className="px-4 py-2 rounded-full border border-sunrise-500 text-sunrise-500 font-semibold text-xs"
-                >
-                  Enquire now
-                </Link>
-              </div>
+        {/* Table Container */}
+        <div className="mt-10 overflow-hidden bg-white rounded-3xl shadow-premium border border-slate-100">
+          <div className="min-w-[700px] overflow-x-auto">
+            {/* Table Header */}
+            <div className="grid grid-cols-12 px-6 py-4 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+              <div className="col-span-4">Trip Name</div>
+              <div className="col-span-4">Departure Window</div>
+              <div className="col-span-2">Trip Status</div>
+              <div className="col-span-1 text-right pr-4">Price</div>
+              <div className="col-span-1"></div>
             </div>
-          ))}
+
+            {/* Table Body */}
+            {rows.length === 0 ? (
+              <div className="text-center py-10 text-slate-400 text-sm">
+                No upcoming departures listed at the moment.
+              </div>
+            ) : (
+              rows.map((row) => {
+                // Support both real Trip objects and legacy DepartingSoon objects
+                const title = row.title || row.tripName;
+                const activeDate = row.dates?.[0] || row;
+                const startDate = activeDate.startDate || 'TBA';
+                const endDate = activeDate.endDate || 'TBA';
+                const status = activeDate.status || 'Guaranteed';
+                const price = activeDate.price ? (typeof activeDate.price === 'number' ? `US$${activeDate.price}` : activeDate.price) : (row.price ? `US$${row.price}` : 'TBA');
+                const linkPath = row.slug ? `/trips/${row.slug}` : '/booking';
+
+                return (
+                  <div
+                    key={row._id}
+                    className="grid grid-cols-12 px-6 py-5 border-t border-slate-100 text-sm text-slate-600 items-center hover:bg-slate-50/50 transition-colors duration-200"
+                  >
+                    <div className="col-span-4 font-semibold text-slate-800">
+                      {row.slug ? <Link to={`/trips/${row.slug}`} className="hover:text-brand">{title}</Link> : title}
+                    </div>
+                    <div className="col-span-4 text-xs font-medium">
+                      🗓 {startDate} - {endDate}
+                    </div>
+                    <div className="col-span-2">
+                      <span className={`inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${getStatusStyle(status)}`}>
+                        {status}
+                      </span>
+                    </div>
+                    <div className="col-span-1 text-right pr-4 font-bold text-slate-900">{price}</div>
+                    <div className="col-span-1 text-right">
+                      <Link
+                        to={linkPath}
+                        className="px-4 py-2 rounded-full bg-brand/5 hover:bg-brand text-brand hover:text-white font-bold text-[10px] uppercase tracking-wider transition-all duration-200 inline-block"
+                      >
+                        Enquire
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
     </section>

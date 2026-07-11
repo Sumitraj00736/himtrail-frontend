@@ -112,7 +112,7 @@ const DynamicMenu = () => {
               exit={{ x: '-100%' }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className="fixed top-0 left-0 bottom-0 w-80 bg-white shadow-2xl z-[9999] overflow-y-auto"
-              style={{ position: 'fixed', height: '100vh', height: '100dvh' }}
+              style={{ position: 'fixed', height: '100dvh' }}
             >
               {/* Close Button */}
               <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex justify-between items-center z-10">

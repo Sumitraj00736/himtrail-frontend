@@ -1,22 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
 import TripCard from './TripCard';
 
-const fallbackFeatured = [
-  { tag: 'Short Trek', title: 'Mardi Himal Trek - 9 Days', duration: '9 Days', price: 'US$790', oldPrice: 'US$1,190', reviews: '5 Reviews', image: 'https://images.unsplash.com/photo-1482192505345-5655af888cc4?q=80&w=1200&auto=format&fit=crop' },
-  { tag: 'Ultimate Adventure', title: 'Mera Peak Expedition - 18 Days', duration: '18 Days', price: 'US$2,490', oldPrice: 'US$3,000', reviews: '11 Reviews', image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=1200&auto=format&fit=crop' },
-  { tag: 'Footprint Special', title: 'Destination Wedding at EBC - 14 Days', duration: '14 Days', price: 'US$7,990', oldPrice: 'US$12,000', reviews: '2 Reviews', image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1200&auto=format&fit=crop' },
+const fallbackCards = [
+  { tag: 'Premium Experience', title: 'Luxury Everest Base Camp Trek - 12 Days', duration: '12 Days', price: 'US$3,490', oldPrice: 'US$4,200', reviews: '45 Reviews', image: 'https://images.unsplash.com/photo-1544735716-166f3636f4c4?q=80&w=1200&auto=format&fit=crop' },
+  { tag: 'Exclusive', title: 'Annapurna Luxury Lodge Trek - 9 Days', duration: '9 Days', price: 'US$2,890', oldPrice: 'US$3,150', reviews: '28 Reviews', image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=1200&auto=format&fit=crop' },
+  { tag: '5-Star Stay', title: 'Kathmandu & Pokhara Luxury Tour', duration: '7 Days', price: 'US$1,990', oldPrice: 'US$2,450', reviews: '62 Reviews', image: 'https://images.unsplash.com/photo-1500043357865-c6b8827edf39?q=80&w=1200&auto=format&fit=crop' },
 ];
 
-const FeaturedTrips = () => {
+const LuxuryTravel = () => {
   const [cards, setCards] = useState([]);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    api.get('/content/featured-trips')
-      .then((res) => setCards(res.data.data?.length ? res.data.data : fallbackFeatured))
-      .catch(() => setCards(fallbackFeatured));
+    api.get('/content/luxury-travel')
+      .then((res) => setCards(res.data.data?.length ? res.data.data : fallbackCards))
+      .catch(() => setCards(fallbackCards));
   }, []);
 
   useEffect(() => {
@@ -31,22 +31,22 @@ const FeaturedTrips = () => {
   }, [cards, index]);
 
   return (
-    <section className="reveal reveal-up bg-white">
+    <section className="reveal reveal-up bg-[#f8fafc]">
       <div className="max-w-6xl mx-auto px-6 py-20">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-brand/5 text-brand flex items-center justify-center text-xl border border-brand/10">⭐</div>
+            <div className="w-14 h-14 rounded-2xl bg-brand/5 text-brand flex items-center justify-center text-xl border border-brand/10">✨</div>
             <div>
-              <p className="text-xs uppercase font-bold tracking-[0.25em] text-sunrise-500">OUR FEATURED TRIPS 2026</p>
-              <h2 className="section-title mt-1 text-slate-800 font-display">Special Adventure Offers</h2>
+              <p className="text-xs uppercase font-bold tracking-[0.25em] text-sunrise-500">PREMIUM EXPERIENCES</p>
+              <h2 className="section-title mt-1 text-slate-800 font-display">Luxury Travel</h2>
             </div>
           </div>
           <Link to="/trips" className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 self-start sm:self-auto hover:-translate-y-0.5">
-            View All Trips →
+            Explore Luxury →
           </Link>
         </div>
 
-        <div className="mt-10 grid md:grid-cols-3 gap-8">
+        <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {visible.map((card, i) => <TripCard key={card._id || card.title || i} trip={card} />)}
         </div>
 
@@ -62,4 +62,4 @@ const FeaturedTrips = () => {
   );
 };
 
-export default FeaturedTrips;
+export default LuxuryTravel;
