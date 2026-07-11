@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Hero from '../components/Hero';
 import TripCard from '../components/TripCard';
-import Sustainability from '../components/Sustainability';
 import DepartingSoonTable from '../components/DepartingSoonTable';
 import BestSellers from '../components/BestSellers';
 import FeaturedTrips from '../components/FeaturedTrips';
@@ -57,7 +56,6 @@ const Home = () => {
       <LuxuryTravel />
       <AboutCompany />
       <Reviews />
-      <Sustainability />
     </div>
   );
 };

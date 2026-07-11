@@ -88,7 +88,7 @@ const Trips = () => {
 
           {/* Normal Render */}
           {status !== 'loading' && items.map((trip) => (
-            <div key={trip._id} className="reveal reveal-up stagger">
+            <div key={trip._id}>
               <TripCard trip={trip} />
             </div>
           ))}

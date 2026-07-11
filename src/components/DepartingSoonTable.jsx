@@ -18,6 +18,35 @@ const DepartingSoonTable = () => {
     return 'bg-blue-50 text-blue-700 border-blue-100';
   };
 
+  // Flatten trips so each departure date gets its own row in the table
+  const departures = [];
+  rows.forEach((trip) => {
+    if (trip.dates && trip.dates.length > 0) {
+      trip.dates.forEach((date, index) => {
+        departures.push({
+          id: `${trip._id}-${index}`,
+          title: trip.title,
+          slug: trip.slug,
+          startDate: date.startDate || 'TBA',
+          endDate: date.endDate || 'TBA',
+          status: date.status || 'Guaranteed',
+          price: date.price ? (typeof date.price === 'number' ? `US$${date.price}` : date.price) : (trip.price ? `US$${trip.price}` : 'TBA'),
+        });
+      });
+    } else {
+      // Fallback if no dates array exists (legacy card support)
+      departures.push({
+        id: trip._id,
+        title: trip.title || trip.tripName || 'TBA',
+        slug: trip.slug,
+        startDate: trip.startDate || 'TBA',
+        endDate: trip.endDate || 'TBA',
+        status: trip.status || 'Guaranteed',
+        price: trip.price ? (typeof trip.price === 'number' ? `US$${trip.price}` : trip.price) : 'TBA',
+      });
+    }
+  });
+
   return (
     <section className="reveal reveal-up bg-slate-50/75 border-y border-slate-100">
       <div className="max-w-6xl mx-auto px-6 py-20">
@@ -56,38 +85,30 @@ const DepartingSoonTable = () => {
             </div>
 
             {/* Table Body */}
-            {rows.length === 0 ? (
+            {departures.length === 0 ? (
               <div className="text-center py-10 text-slate-400 text-sm">
                 No upcoming departures listed at the moment.
               </div>
             ) : (
-              rows.map((row) => {
-                // Support both real Trip objects and legacy DepartingSoon objects
-                const title = row.title || row.tripName;
-                const activeDate = row.dates?.[0] || row;
-                const startDate = activeDate.startDate || 'TBA';
-                const endDate = activeDate.endDate || 'TBA';
-                const status = activeDate.status || 'Guaranteed';
-                const price = activeDate.price ? (typeof activeDate.price === 'number' ? `US$${activeDate.price}` : activeDate.price) : (row.price ? `US$${row.price}` : 'TBA');
-                const linkPath = row.slug ? `/trips/${row.slug}` : '/booking';
-
+              departures.map((dep) => {
+                const linkPath = dep.slug ? `/trips/${dep.slug}` : '/booking';
                 return (
                   <div
-                    key={row._id}
+                    key={dep.id}
                     className="grid grid-cols-12 px-6 py-5 border-t border-slate-100 text-sm text-slate-600 items-center hover:bg-slate-50/50 transition-colors duration-200"
                   >
                     <div className="col-span-4 font-semibold text-slate-800">
-                      {row.slug ? <Link to={`/trips/${row.slug}`} className="hover:text-brand">{title}</Link> : title}
+                      {dep.slug ? <Link to={`/trips/${dep.slug}`} className="hover:text-brand">{dep.title}</Link> : dep.title}
                     </div>
                     <div className="col-span-4 text-xs font-medium">
-                      🗓 {startDate} - {endDate}
+                      🗓 {dep.startDate} - {dep.endDate}
                     </div>
                     <div className="col-span-2">
-                      <span className={`inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${getStatusStyle(status)}`}>
-                        {status}
+                      <span className={`inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${getStatusStyle(dep.status)}`}>
+                        {dep.status}
                       </span>
                     </div>
-                    <div className="col-span-1 text-right pr-4 font-bold text-slate-900">{price}</div>
+                    <div className="col-span-1 text-right pr-4 font-bold text-slate-900">{dep.price}</div>
                     <div className="col-span-1 text-right">
                       <Link
                         to={linkPath}

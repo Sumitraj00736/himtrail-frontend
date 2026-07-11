@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../services/api';
+import ImageUploader from '../../components/ImageUploader';
 
 const EMPTY_FORM = {
   title: '',
@@ -169,8 +170,12 @@ const TripForm = () => {
               <input className={inputCls} placeholder="everest-base-camp-trek" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required />
             </Field>
           </div>
-          <Field label="Hero Image URL">
-            <input className={inputCls} placeholder="https://..." value={form.heroImage} onChange={(e) => setForm({ ...form, heroImage: e.target.value })} />
+          <Field label="Hero Image">
+            <ImageUploader
+              value={form.heroImage}
+              onChange={(url) => setForm({ ...form, heroImage: url })}
+              label="Upload Hero Image"
+            />
           </Field>
           <div className="grid sm:grid-cols-3 gap-4">
             <Field label="Destination">
@@ -310,18 +315,27 @@ const TripForm = () => {
             <h2 className="font-bold text-slate-700 text-base">Gallery Images</h2>
             <button type="button" onClick={() => setForm({ ...form, gallery: [...form.gallery, ''] })} className="text-xs font-bold text-brand hover:underline">+ Add Image</button>
           </div>
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {form.gallery.map((url, idx) => (
-              <div key={idx} className="flex gap-2 items-center">
-                <input className={inputCls} value={url} placeholder="https://..." onChange={(e) => {
-                  const gallery = form.gallery.map((x, i) => i === idx ? e.target.value : x);
-                  setForm({ ...form, gallery });
-                }} />
-                {url && <img src={url} alt="" className="w-10 h-10 rounded-lg object-cover border flex-shrink-0" onError={(e) => { e.target.style.display = 'none'; }} />}
-                <button type="button" className="text-red-400 hover:text-red-600 text-xs font-bold px-2" onClick={() => {
-                  const gallery = form.gallery.filter((_, i) => i !== idx);
-                  setForm({ ...form, gallery: gallery.length ? gallery : [''] });
-                }}>✕</button>
+              <div key={idx} className="relative bg-white border border-slate-200 rounded-2xl p-3 flex flex-col gap-2">
+                <ImageUploader
+                  value={url}
+                  onChange={(newUrl) => {
+                    const gallery = form.gallery.map((x, i) => i === idx ? newUrl : x);
+                    setForm({ ...form, gallery });
+                  }}
+                  label="Upload Image"
+                />
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 text-slate-400 hover:text-red-500 font-bold text-xs"
+                  onClick={() => {
+                    const gallery = form.gallery.filter((_, i) => i !== idx);
+                    setForm({ ...form, gallery: gallery.length ? gallery : [''] });
+                  }}
+                >
+                  ✕ Remove Card
+                </button>
               </div>
             ))}
           </div>
