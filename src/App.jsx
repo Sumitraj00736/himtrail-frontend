@@ -20,6 +20,8 @@ import MenusAdmin from './dashboard/pages/MenusAdmin';
 import TrekkingNepalAdmin from './dashboard/pages/TrekkingNepalAdmin';
 import LuxuryTravelAdmin from './dashboard/pages/LuxuryTravelAdmin';
 import TripForm from './dashboard/pages/TripForm';
+import TeamAdmin from './dashboard/pages/TeamAdmin';
+import DestinationsAdmin from './dashboard/pages/DestinationsAdmin';
 
 const App = () => (
   <Routes>
@@ -56,6 +58,8 @@ const App = () => (
       <Route path="menus" element={<MenusAdmin />} />
       <Route path="trekking-in-nepal" element={<TrekkingNepalAdmin />} />
       <Route path="luxury-travel" element={<LuxuryTravelAdmin />} />
+      <Route path="team" element={<TeamAdmin />} />
+      <Route path="destinations" element={<DestinationsAdmin />} />
     </Route>
   </Routes>
 );

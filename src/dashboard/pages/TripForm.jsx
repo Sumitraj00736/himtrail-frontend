@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import ImageUploader from '../../components/ImageUploader';
+
+/* ─── Destination (Country) → Region mapping ───────────────── */
+const DESTINATION_REGIONS = {
+  Nepal:    ['Everest', 'Annapurna', 'Langtang', 'Manaslu', 'Upper Mustang', 'Dolpo'],
+  Tibet:    ['Tibet'],
+  Bhutan:   ['Bhutan'],
+  Tanzania: ['Tanzania'],
+};
 
 const EMPTY_FORM = {
   title: '',
@@ -26,6 +34,8 @@ const EMPTY_FORM = {
   excluded: [''],
   dates: [{ startDate: '', endDate: '', status: '', price: '' }],
   displaySections: [],
+  isDestination: false,
+  destinationSections: [],
 };
 
 const Field = ({ label, children }) => (
@@ -38,6 +48,94 @@ const Field = ({ label, children }) => (
 const inputCls = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all';
 const textareaCls = `${inputCls} rounded-2xl resize-y`;
 
+/* ─── Region Warning Dialog with Sound ─────────────────────── */
+const RegionWarningDialog = ({ open, onClose }) => {
+  useEffect(() => {
+    if (!open) return;
+    // Play two-tone alert beep via Web Audio API
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.22].forEach((delay) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = delay === 0 ? 880 : 660;
+        gain.gain.value = 0.3;
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.15);
+      });
+    } catch {
+      /* AudioContext unavailable — silent fallback */
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+        style={{ animation: 'fadeIn 0.15s ease' }}
+      />
+      {/* Dialog */}
+      <div
+        className="fixed z-[9999] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md"
+        style={{ animation: 'fadeInDown 0.3s cubic-bezier(0.16,1,0.3,1)' }}
+      >
+        <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+          {/* Red header */}
+          <div className="bg-gradient-to-r from-red-500 to-orange-500 px-6 py-5 flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl flex-shrink-0 animate-bounce">
+              ⚠️
+            </div>
+            <div>
+              <h3 className="text-white font-black text-lg">Region Required!</h3>
+              <p className="text-white/80 text-xs font-medium mt-0.5">Cannot save destination without a region</p>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-5 space-y-4">
+            <p className="text-red-600 text-sm font-bold leading-relaxed bg-red-50 border border-red-200 rounded-2xl p-4">
+              ⚠️ please create region along with destination in menu section
+            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-start gap-3">
+              <span className="text-lg flex-shrink-0 mt-0.5">💡</span>
+              <div className="text-xs text-amber-800 font-medium leading-relaxed space-y-1">
+                <p>1. Select the correct <strong>Destination (Country)</strong>.</p>
+                <p>2. Pick or create a custom <strong>Region</strong>.</p>
+                <p>3. Add the exact same region as a column in your Menu Management section.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="px-6 pb-5 flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl bg-brand text-white font-bold text-sm shadow-md shadow-brand/25 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+            >
+              ✅ Got it, I'll select a region
+            </button>
+            <Link
+              to="/dashboard/menus"
+              className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all text-center flex-shrink-0"
+              onClick={onClose}
+            >
+              🍔 Go to Menus →
+            </Link>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ─── TripForm ─────────────────────────────────────────────── */
 const TripForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -47,8 +145,34 @@ const TripForm = () => {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [showRegionDialog, setShowRegionDialog] = useState(false);
+  const [dynamicRegions, setDynamicRegions] = useState(DESTINATION_REGIONS);
+  const [isCreatingCustomRegion, setIsCreatingCustomRegion] = useState(false);
+
+  /* Available regions for the currently selected destination country */
+  const availableRegions = dynamicRegions[form.destination] || [];
 
   useEffect(() => {
+    // 1. Fetch all trips to build the dynamic list of unique regions per country
+    api.get('/trips')
+      .then((res) => {
+        const allTrips = res.data.data || res.data || [];
+        const merged = { ...DESTINATION_REGIONS };
+        allTrips.forEach((trip) => {
+          if (trip.destination && trip.region) {
+            if (!merged[trip.destination]) {
+              merged[trip.destination] = [];
+            }
+            if (!merged[trip.destination].includes(trip.region)) {
+              merged[trip.destination].push(trip.region);
+            }
+          }
+        });
+        setDynamicRegions(merged);
+      })
+      .catch(() => {});
+
+    // 2. If editing, fetch the specific trip data
     if (isNew) return;
     api.get(`/trips/id/${id}`)
       .then((res) => {
@@ -76,14 +200,34 @@ const TripForm = () => {
           excluded: t.excluded?.length ? t.excluded : [''],
           dates: t.dates?.length ? t.dates : [{ startDate: '', endDate: '', status: '', price: '' }],
           displaySections: t.displaySections || [],
+          isDestination: t.isDestination || false,
+          destinationSections: t.destinationSections || [],
         });
       })
       .catch(() => setMessage({ text: 'Failed to load trip.', type: 'error' }))
       .finally(() => setLoading(false));
   }, [id, isNew]);
 
+  /* When destination country changes → auto-reset region to first valid option */
+  const handleDestinationChange = (newDest) => {
+    const regions = dynamicRegions[newDest] || [];
+    const regionStillValid = regions.includes(form.region);
+    setForm({
+      ...form,
+      destination: newDest,
+      region: regionStillValid ? form.region : (regions[0] || ''),
+    });
+  };
+
   const submit = async (e) => {
     e.preventDefault();
+
+    /* ── Validate: destinations must have a region ── */
+    if (form.isDestination && !form.region) {
+      setShowRegionDialog(true);
+      return;
+    }
+
     setSaving(true);
     try {
       if (isNew) {
@@ -124,6 +268,9 @@ const TripForm = () => {
 
   return (
     <div>
+      {/* Region warning dialog with sound */}
+      <RegionWarningDialog open={showRegionDialog} onClose={() => setShowRegionDialog(false)} />
+
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button
@@ -178,20 +325,57 @@ const TripForm = () => {
             />
           </Field>
           <div className="grid sm:grid-cols-3 gap-4">
-            <Field label="Destination">
-              <select className={inputCls} value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })}>
-                {['Nepal', 'Tanzania', 'Bhutan', 'Tibet'].map((d) => <option key={d}>{d}</option>)}
+            <Field label="Destination (Country)">
+              <select className={inputCls} value={form.destination} onChange={(e) => handleDestinationChange(e.target.value)}>
+                {Object.keys(DESTINATION_REGIONS).map((d) => <option key={d}>{d}</option>)}
               </select>
+              <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                Regions filter based on this country
+              </p>
             </Field>
             <Field label="Category">
               <select className={inputCls} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                 {['Trekking', 'Heli Tour', 'Adventure', 'Climbing', 'Cultural', 'Wildlife'].map((c) => <option key={c}>{c}</option>)}
               </select>
             </Field>
-            <Field label="Region">
-              <select className={inputCls} value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })}>
-                {['Everest', 'Annapurna', 'Langtang', 'Manaslu', 'Upper Mustang', 'Dolpo', 'Tibet', 'Bhutan', 'Tanzania'].map((r) => <option key={r}>{r}</option>)}
-              </select>
+            <Field label={
+              <span className="flex items-center justify-between w-full">
+                <span>Region {form.isDestination && <span className="text-red-500 ml-1">*</span>}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreatingCustomRegion(!isCreatingCustomRegion);
+                    setForm({ ...form, region: '' });
+                  }}
+                  className="text-[10px] text-brand font-bold uppercase tracking-wider hover:underline focus:outline-none"
+                >
+                  {isCreatingCustomRegion ? '✕ Select Existing' : '＋ Create New Region'}
+                </button>
+              </span>
+            }>
+              {isCreatingCustomRegion ? (
+                <input
+                  type="text"
+                  className={`${inputCls} ${form.isDestination && !form.region ? 'border-red-300 ring-2 ring-red-200 bg-red-50/30' : ''}`}
+                  placeholder="Enter custom region name"
+                  value={form.region}
+                  onChange={(e) => setForm({ ...form, region: e.target.value })}
+                />
+              ) : (
+                <select
+                  className={`${inputCls} ${form.isDestination && !form.region ? 'border-red-300 ring-2 ring-red-200 bg-red-50/30' : ''}`}
+                  value={form.region}
+                  onChange={(e) => setForm({ ...form, region: e.target.value })}
+                >
+                  <option value="">— Select a region —</option>
+                  {availableRegions.map((r) => <option key={r}>{r}</option>)}
+                </select>
+              )}
+              <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                {isCreatingCustomRegion
+                  ? `📍 Creating custom region for ${form.destination}`
+                  : `📍 ${availableRegions.length} regions available for ${form.destination}`}
+              </p>
             </Field>
           </div>
         </section>
@@ -271,6 +455,109 @@ const TripForm = () => {
               </label>
             ))}
           </div>
+        </section>
+
+        {/* ── Destination Settings ── */}
+        <section className="border-2 rounded-3xl p-6 transition-all duration-300"
+          style={{
+            borderColor: form.isDestination ? 'rgb(36 59 117 / 0.4)' : 'rgb(226 232 240)',
+            background: form.isDestination ? 'rgb(36 59 117 / 0.03)' : '#f8fafc',
+          }}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="font-bold text-slate-700 text-base flex items-center gap-2">
+                <span>📍</span> Destination Settings
+              </h2>
+              <p className="text-slate-400 text-xs mt-1">
+                Mark this trip as a Destination — it will appear in the Destinations section and can feed into Trek in Nepal or Luxury Travel carousels.
+              </p>
+            </div>
+            {/* Toggle */}
+            <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-1">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={form.isDestination}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setForm({ ...form, isDestination: checked, destinationSections: checked ? form.destinationSections : [] });
+                  /* If turning on and no region selected, show warning immediately */
+                  if (checked && !form.region) {
+                    setTimeout(() => setShowRegionDialog(true), 200);
+                  }
+                }}
+              />
+              <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-brand peer-focus:ring-2 peer-focus:ring-brand/30 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 after:shadow-sm" />
+            </label>
+          </div>
+
+          {form.isDestination && (
+            <div className="mt-5 pt-5 border-t border-slate-200 space-y-4">
+              {/* Region reminder if empty */}
+              {!form.region && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-2xl px-4 py-3 flex items-start gap-3 animate-pulse">
+                  <span className="text-xl flex-shrink-0">🚨</span>
+                  <div>
+                    <p className="text-sm text-red-700 font-bold">Region not selected!</p>
+                    <p className="text-xs text-red-600 mt-1">
+                      Scroll up to <strong>Basic Information → Region</strong> and select one. Regions available: <strong>{availableRegions.join(', ')}</strong>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {form.region && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-2.5 flex items-center gap-2">
+                  <span>✅</span>
+                  <p className="text-xs text-emerald-700 font-medium">
+                    Region: <strong>{form.region}</strong> ({form.destination}) — Make sure this region also exists in your Menu section.
+                  </p>
+                </div>
+              )}
+
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Also show in these homepage sections:</p>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { value: 'Trek in Nepal', icon: '🏔️', desc: 'Trekking in Nepal carousel' },
+                  { value: 'Luxury Travel', icon: '✨', desc: 'Luxury Travel carousel' },
+                ].map(({ value, icon, desc }) => (
+                  <label
+                    key={value}
+                    className={`flex items-center gap-3 px-5 py-3 rounded-2xl border-2 text-sm font-semibold cursor-pointer transition-all duration-200 ${
+                      form.destinationSections.includes(value)
+                        ? 'bg-brand text-white border-brand shadow-md shadow-brand/20'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-brand/40 hover:bg-brand/5'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={form.destinationSections.includes(value)}
+                      onChange={(e) => {
+                        setForm((prev) => ({
+                          ...prev,
+                          destinationSections: e.target.checked
+                            ? [...prev.destinationSections, value]
+                            : prev.destinationSections.filter((s) => s !== value),
+                        }));
+                      }}
+                    />
+                    <span className="text-lg leading-none">{icon}</span>
+                    <div>
+                      <div>{form.destinationSections.includes(value) ? '✓ ' : ''}{value}</div>
+                      <div className={`text-[10px] font-normal mt-0.5 ${ form.destinationSections.includes(value) ? 'text-white/70' : 'text-slate-400'}`}>{desc}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              {form.destinationSections.length > 0 && (
+                <p className="text-xs text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2 font-medium">
+                  ✅ This destination will automatically appear in: {form.destinationSections.join(' and ')} on the homepage.
+                </p>
+              )}
+            </div>
+          )}
         </section>
 
         {/* ── Itinerary ── */}

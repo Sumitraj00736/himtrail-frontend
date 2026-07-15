@@ -8,7 +8,9 @@ import FeaturedTrips from '../components/FeaturedTrips';
 import TrekkingInNepal from '../components/TrekkingInNepal';
 import LuxuryTravel from '../components/LuxuryTravel';
 import AboutCompany from '../components/AboutCompany';
+import TeamSection from '../components/TeamSection';
 import Reviews from '../components/Reviews';
+import Destinations from '../components/Destinations';
 import { fetchTrips } from '../features/trips/tripsSlice';
 
 const Home = () => {
@@ -25,6 +27,9 @@ const Home = () => {
     <div>
       <Hero />
       
+      {/* Destinations Section */}
+      <Destinations />
+
       {/* Featured Journeys Section */}
       <section className="reveal reveal-up max-w-6xl mx-auto px-6 py-20">
         <div className="text-center md:text-left mb-12">
@@ -55,6 +60,7 @@ const Home = () => {
       <FeaturedTrips />
       <LuxuryTravel />
       <AboutCompany />
+      <TeamSection />
       <Reviews />
     </div>
   );

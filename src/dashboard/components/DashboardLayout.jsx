@@ -5,10 +5,12 @@ import { useState } from 'react';
 const mainNav = [
   { to: '/dashboard', label: 'Overview', icon: '📊' },
   { to: '/dashboard/trips', label: 'Trips Database', icon: '🏔️' },
+  { to: '/dashboard/destinations', label: 'Destinations', icon: '📍' },
   { to: '/dashboard/bookings', label: 'Bookings', icon: '📅' },
   { to: '/dashboard/reviews', label: 'Reviews', icon: '⭐' },
   { to: '/dashboard/homepage', label: 'Homepage Settings', icon: '⚙️' },
   { to: '/dashboard/menus', label: 'Menus', icon: '🍔' },
+  { to: '/dashboard/team', label: 'Team Management', icon: '👥' },
 ];
 
 const sectionNav = [
