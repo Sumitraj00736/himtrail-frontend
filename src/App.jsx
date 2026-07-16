@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import Trips from './pages/Trips';
@@ -22,6 +22,9 @@ import LuxuryTravelAdmin from './dashboard/pages/LuxuryTravelAdmin';
 import TripForm from './dashboard/pages/TripForm';
 import TeamAdmin from './dashboard/pages/TeamAdmin';
 import DestinationsAdmin from './dashboard/pages/DestinationsAdmin';
+import DestinationCategoryForm from './dashboard/pages/DestinationCategoryForm';
+import DependenciesAdmin from './dashboard/pages/DependenciesAdmin';
+import DestinationCategory from './pages/DestinationCategory';
 
 const App = () => (
   <Routes>
@@ -34,6 +37,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/trips" element={<Trips />} />
             <Route path="/trips/:slug" element={<TripDetail />} />
+            <Route path="/destinations/:country/:slug" element={<DestinationCategory />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<Admin />} />
@@ -49,6 +53,7 @@ const App = () => (
       <Route path="trips" element={<TripsAdmin />} />
       <Route path="trips/new" element={<TripForm />} />
       <Route path="trips/:id" element={<TripForm />} />
+      <Route path="dependencies" element={<DependenciesAdmin />} />
       <Route path="bookings" element={<BookingsAdmin />} />
       <Route path="reviews" element={<ReviewsAdmin />} />
       <Route path="departing-soon" element={<DepartingSoonAdmin />} />
@@ -60,6 +65,8 @@ const App = () => (
       <Route path="luxury-travel" element={<LuxuryTravelAdmin />} />
       <Route path="team" element={<TeamAdmin />} />
       <Route path="destinations" element={<DestinationsAdmin />} />
+      <Route path="destinations/new" element={<DestinationCategoryForm />} />
+      <Route path="destinations/:id" element={<DestinationCategoryForm />} />
     </Route>
   </Routes>
 );

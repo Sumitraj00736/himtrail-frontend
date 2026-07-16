@@ -4,10 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import { sanitizeHtml } from '../utils/richText';
 
-const TripDetail = () => {
+const TripDetail = ({ apiPath = '/trips' }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [trip, setTrip] = useState(null);
+  const [notFound, setNotFound] = useState(false);
   const [tab, setTab] = useState('included');
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingStep, setBookingStep] = useState(1);
@@ -26,8 +27,29 @@ const TripDetail = () => {
   const [expandedFaq, setExpandedFaq] = useState([]);
 
   useEffect(() => {
-    api.get(`/trips/${slug}`).then((res) => setTrip(res.data.data));
-  }, [slug]);
+    setTrip(null);
+    setNotFound(false);
+    api
+      .get(`${apiPath}/${slug}`)
+      .then((res) => setTrip(res.data.data))
+      .catch(() => setNotFound(true));
+  }, [slug, apiPath]);
+
+  if (notFound) {
+    return (
+      <div className="max-w-6xl mx-auto px-6 py-24 flex flex-col items-center justify-center min-h-[50vh]">
+        <p className="text-4xl mb-3">📍</p>
+        <p className="text-slate-700 font-bold text-lg">Page not found</p>
+        <p className="mt-2 text-slate-500 text-sm">This destination or trip does not exist.</p>
+        <button
+          onClick={() => navigate('/')}
+          className="mt-6 px-5 py-2.5 rounded-full bg-brand text-white text-sm font-bold"
+        >
+          Back to Home
+        </button>
+      </div>
+    );
+  }
 
   if (!trip) {
     return (

@@ -57,8 +57,11 @@ const DynamicMenu = () => {
                       <p className="text-forest-800 font-semibold mb-2">{col.title}</p>
                       <ul className="space-y-2 text-sm text-forest-700">
                         {col.items.map((item) => (
-                          <li key={item.label}>
-                            <Link to={item.href} className="hover:text-forest-800 transition-colors duration-150">
+                          <li key={`${item.label}-${item.href || item.tripId}`}>
+                            <Link
+                              to={item.href || '#'}
+                              className="hover:text-forest-800 transition-colors duration-150"
+                            >
                               {item.label}
                             </Link>
                           </li>
@@ -74,8 +77,11 @@ const DynamicMenu = () => {
                       <p className="text-forest-800 font-semibold mb-3">{col.title}</p>
                       <ul className="space-y-2 text-sm">
                         {col.items.map((item) => (
-                          <li key={item.label}>
-                            <Link to={item.href} className="hover:text-forest-800 transition-colors duration-150">
+                          <li key={`${item.label}-${item.href || item.tripId}`}>
+                            <Link
+                              to={item.href || '#'}
+                              className="hover:text-forest-800 transition-colors duration-150"
+                            >
                               {item.label}
                             </Link>
                           </li>
@@ -151,9 +157,9 @@ const DynamicMenu = () => {
                                 <p className="text-sm font-medium text-forest-700 mb-2">{col.title}</p>
                                 <ul className="space-y-2 text-sm text-forest-700">
                                   {col.items.map((item) => (
-                                    <li key={item.label}>
+                                    <li key={`${item.label}-${item.href || item.tripId}`}>
                                       <Link
-                                        to={item.href}
+                                        to={item.href || '#'}
                                         className="hover:text-forest-800 block py-1 transition-colors duration-150"
                                         onClick={() => setMobileOpen(false)}
                                       >

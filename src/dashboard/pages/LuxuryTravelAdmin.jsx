@@ -31,10 +31,10 @@ const LuxuryTravelAdmin = () => {
           </p>
         </div>
         <Link 
-          to="/dashboard/trips" 
+          to="/dashboard/destinations" 
           className="px-5 py-2.5 bg-brand text-white text-sm font-semibold rounded-full shadow-md shadow-brand/20 hover:-translate-y-0.5 transition-all duration-300"
         >
-          Manage in Trips Database
+          Manage Destinations
         </Link>
       </div>
 
@@ -42,9 +42,9 @@ const LuxuryTravelAdmin = () => {
         <div className="text-slate-400 font-medium">Loading preview...</div>
       ) : items.length === 0 ? (
         <div className="bg-slate-50 border border-slate-200 border-dashed rounded-3xl p-12 text-center">
-          <p className="text-slate-500 mb-4">No trips are currently marked as Luxury Travel.</p>
-          <Link to="/dashboard/trips" className="text-brand font-semibold hover:underline">
-            Go tag some trips!
+          <p className="text-slate-500 mb-4">No destinations are currently marked as Luxury Travel.</p>
+          <Link to="/dashboard/destinations" className="text-brand font-semibold hover:underline">
+            Go tag some destinations!
           </Link>
         </div>
       ) : (

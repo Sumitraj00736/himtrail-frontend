@@ -33,10 +33,15 @@ const SectionPill = ({ label }) => (
 /* ─── Card ──────────────────────────────────────────────────── */
 const DestinationCard = ({ item }) => {
   const cfg = REGION_CONFIG[item.region] || DEFAULT_COLORS;
+  const href = item.href || `/destinations/${String(item.country || item.menuColumn || '').toLowerCase()}/${item.slug}`;
+  const packageLabel =
+    item.packageCount != null
+      ? `${item.packageCount} package${item.packageCount === 1 ? '' : 's'}`
+      : null;
 
   return (
     <Link
-      to={`/trips?region=${encodeURIComponent(item.region)}`}
+      to={href}
       className="group relative flex-shrink-0 w-72 h-80 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 cursor-pointer"
       style={{ background: `linear-gradient(145deg, ${cfg.from}, ${cfg.to})` }}
     >
@@ -54,7 +59,7 @@ const DestinationCard = ({ item }) => {
       {/* Top badges */}
       <div className="absolute top-4 left-4 right-4 flex items-start justify-between">
         <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-widest border border-white/20">
-          {item.category}
+          {item.country || item.menuColumn || item.category || 'Destination'}
         </span>
         {item.destinationSections?.length > 0 && (
           <div className="flex flex-col gap-1 items-end">
@@ -66,31 +71,37 @@ const DestinationCard = ({ item }) => {
       {/* Bottom content */}
       <div className="absolute bottom-0 left-0 right-0 p-5">
         <p className="text-white/60 text-[11px] font-bold uppercase tracking-widest mb-1">
-          {item.region}
+          {item.menuColumn || item.country || item.region}
         </p>
         <h3 className="text-white font-black text-lg leading-tight line-clamp-2 group-hover:text-white/90 transition-colors">
           {item.title}
         </h3>
         <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 text-white/70 text-xs font-medium">
-            <span>⏱ {item.duration}d</span>
-            {item.maxAltitude && <span>⛰ {item.maxAltitude}</span>}
-          </div>
-          <div className="text-right">
-            {item.oldPrice > 0 && (
-              <p className="text-white/50 text-[10px] line-through">
-                US${item.oldPrice?.toLocaleString()}
+          {packageLabel ? (
+            <span className="text-white/80 text-xs font-semibold">{packageLabel}</span>
+          ) : (
+            <div className="flex items-center gap-3 text-white/70 text-xs font-medium">
+              {item.duration != null && <span>⏱ {item.duration}d</span>}
+              {item.maxAltitude && <span>⛰ {item.maxAltitude}</span>}
+            </div>
+          )}
+          {item.price != null && (
+            <div className="text-right">
+              {item.oldPrice > 0 && (
+                <p className="text-white/50 text-[10px] line-through">
+                  US${item.oldPrice?.toLocaleString()}
+                </p>
+              )}
+              <p className="text-white font-black text-sm">
+                US${item.price?.toLocaleString()}
               </p>
-            )}
-            <p className="text-white font-black text-sm">
-              US${item.price?.toLocaleString()}
-            </p>
-          </div>
+            </div>
+          )}
         </div>
         {/* Hover CTA */}
         <div className="mt-3 overflow-hidden max-h-0 group-hover:max-h-10 transition-all duration-300">
           <div className="flex items-center gap-1.5 text-white/80 text-xs font-semibold">
-            <span>Explore trips</span>
+            <span>Explore destination</span>
             <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
           </div>
         </div>
@@ -112,20 +123,24 @@ const Destinations = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  /* Build tab list dynamically from loaded data — same regions as menu */
+  /* Build tab list from menu columns (navbar) or regions */
   const tabs = useMemo(() => {
-    const regions = [...new Set(items.map((i) => i.region))].sort((a, b) => {
-      // Keep the preferred display order matching the menu
+    const hasMenuColumns = items.some((i) => i.menuColumn);
+    const key = hasMenuColumns ? 'menuColumn' : 'region';
+    const values = [...new Set(items.map((i) => i[key]).filter(Boolean))];
+    if (key === 'region') {
       const ORDER = ['Everest','Annapurna','Langtang','Manaslu','Upper Mustang','Dolpo','Tibet','Bhutan','Tanzania'];
-      return ORDER.indexOf(a) - ORDER.indexOf(b);
-    });
-    return ['All', ...regions];
+      values.sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+    }
+    return ['All', ...values];
   }, [items]);
+
+  const tabKey = items.some((i) => i.menuColumn) ? 'menuColumn' : 'region';
 
   const visible = useMemo(() => {
     if (activeTab === 'All') return items;
-    return items.filter((i) => i.region === activeTab);
-  }, [items, activeTab]);
+    return items.filter((i) => i[tabKey] === activeTab);
+  }, [items, activeTab, tabKey]);
 
   if (!loading && items.length === 0) return null;
 
@@ -161,7 +176,7 @@ const Destinations = () => {
           <div className="flex items-center gap-2 flex-wrap mb-8 overflow-x-auto no-scrollbar pb-1">
             {tabs.map((tab) => {
               const cfg   = REGION_CONFIG[tab] || DEFAULT_COLORS;
-              const count = tab === 'All' ? items.length : items.filter((i) => i.region === tab).length;
+              const count = tab === 'All' ? items.length : items.filter((i) => i[tabKey] === tab).length;
               const isActive = tab === activeTab;
               return (
                 <button

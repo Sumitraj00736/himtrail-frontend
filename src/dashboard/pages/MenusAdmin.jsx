@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { api } from '../../services/api';
 
 /* ─── helpers ─────────────────────────────────────────── */
@@ -6,10 +6,42 @@ const emptyMenu = () => ({
   label: '',
   style: 'mega',
   order: 0,
-  columns: [{ title: '', items: [{ label: '', href: '' }] }],
+  columns: [{ title: '', items: [{ label: '', tripId: '', href: '' }] }],
 });
 
 const deepClone = (v) => JSON.parse(JSON.stringify(v));
+
+const tripHref = (slug) => `/trips/${slug}`;
+
+/** Pull slug from legacy `/trips/foo` or bare slug */
+const slugFromHref = (href = '') =>
+  String(href)
+    .replace(/^\/?(trips|destinations)\//i, '')
+    .replace(/^\//, '')
+    .toLowerCase()
+    .trim();
+
+/** Attach tripId to legacy items that only have href */
+const hydrateMenuTripIds = (menu, trips) => {
+  if (!menu?.columns?.length || !trips?.length) return menu;
+  const bySlug = new Map(trips.map((t) => [String(t.slug).toLowerCase(), t]));
+  const columns = menu.columns.map((col) => ({
+    ...col,
+    items: (col.items || []).map((item) => {
+      if (item.tripId) return item;
+      const slug = slugFromHref(item.href);
+      const trip = slug ? bySlug.get(slug) : null;
+      if (!trip) return item;
+      return {
+        ...item,
+        tripId: trip._id,
+        href: tripHref(trip.slug),
+        label: item.label || trip.title,
+      };
+    }),
+  }));
+  return { ...menu, columns };
+};
 
 /* ─── sub-components ──────────────────────────────────── */
 const Badge = ({ children, color = 'slate' }) => {
@@ -19,7 +51,9 @@ const Badge = ({ children, color = 'slate' }) => {
     amber: 'bg-amber-100 text-amber-700',
   };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${colors[color]}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${colors[color]}`}
+    >
       {children}
     </span>
   );
@@ -40,8 +74,231 @@ const IconBtn = ({ onClick, title, children, danger }) => (
   </button>
 );
 
+/* ─── Searchable trip picker ──────────────────────────── */
+const TripSearchSelect = ({ trips, value, onSelect }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const rootRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const selected = useMemo(
+    () => trips.find((t) => String(t._id) === String(value)) || null,
+    [trips, value]
+  );
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return trips.slice(0, 80);
+    return trips
+      .filter((t) => {
+        const hay = [t.title, t.slug, t.region, t.destination, t.category]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(q);
+      })
+      .slice(0, 80);
+  }, [trips, query]);
+
+  useEffect(() => {
+    const onDoc = (e) => {
+      if (!rootRef.current?.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      setQuery('');
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [open]);
+
+  const pick = (trip) => {
+    onSelect(trip);
+    setOpen(false);
+    setQuery('');
+  };
+
+  return (
+    <div ref={rootRef} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`w-full text-left text-sm bg-white border-2 rounded-xl px-3 py-2.5 transition-all flex items-center gap-2 ${
+          selected
+            ? 'border-brand/50 ring-2 ring-brand/10 bg-brand/[0.02]'
+            : 'border-dashed border-brand/40 hover:border-brand hover:bg-brand/[0.03]'
+        }`}
+      >
+        <span className="text-base leading-none flex-shrink-0">🔍</span>
+        <span className="flex-1 min-w-0">
+          {selected ? (
+            <>
+              <span className="block font-semibold text-slate-800 truncate">{selected.title}</span>
+              <span className="block text-[11px] text-slate-400 truncate mt-0.5">
+                {[selected.destination, selected.region, selected.category].filter(Boolean).join(' · ')}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="block font-semibold text-brand">Select trip from database</span>
+              <span className="block text-[11px] text-slate-400 mt-0.5">
+                Click to search all trips — no path needed
+              </span>
+            </>
+          )}
+        </span>
+        <span className="text-slate-400 text-xs flex-shrink-0 font-bold">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/80 overflow-hidden">
+          <div className="p-2 border-b border-slate-100 bg-slate-50/80">
+            <input
+              ref={inputRef}
+              type="search"
+              className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/40"
+              placeholder="Type to filter trips by title, region, destination…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setOpen(false);
+                if (e.key === 'Enter' && filtered[0]) {
+                  e.preventDefault();
+                  pick(filtered[0]);
+                }
+              }}
+            />
+          </div>
+          <ul className="max-h-64 overflow-y-auto py-1">
+            {trips.length === 0 ? (
+              <li className="px-3 py-6 text-center text-xs text-amber-600 font-medium">
+                No trips loaded. Create trips first, then refresh this page.
+              </li>
+            ) : filtered.length === 0 ? (
+              <li className="px-3 py-4 text-center text-xs text-slate-400 font-medium">
+                No trips match “{query}”
+              </li>
+            ) : (
+              filtered.map((trip) => {
+                const isActive = String(trip._id) === String(value);
+                return (
+                  <li key={trip._id}>
+                    <button
+                      type="button"
+                      onClick={() => pick(trip)}
+                      className={`w-full text-left px-3 py-2.5 text-sm transition-colors ${
+                        isActive ? 'bg-brand/10 text-brand' : 'hover:bg-slate-50 text-slate-700'
+                      }`}
+                    >
+                      <div className="font-medium truncate">{trip.title}</div>
+                      <div className="text-[11px] text-slate-400 mt-0.5 truncate">
+                        {[trip.destination, trip.region, trip.category].filter(Boolean).join(' · ')}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+          <div className="px-3 py-1.5 border-t border-slate-100 text-[10px] text-slate-400 font-medium clear-both">
+            Showing {filtered.length} of {trips.length} trips
+            {selected && (
+              <button
+                type="button"
+                className="float-right text-red-400 hover:text-red-600 font-semibold"
+                onClick={() => {
+                  onSelect(null);
+                  setOpen(false);
+                }}
+              >
+                Clear link
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── Searchable category picker (Destinations menu) ─── */
+const CategorySearchSelect = ({ categories, value, onSelect }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const rootRef = useRef(null);
+
+  const selected = useMemo(
+    () => categories.find((c) => String(c._id) === String(value)) || null,
+    [categories, value]
+  );
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((c) =>
+      [c.title, c.slug, c.country].filter(Boolean).join(' ').toLowerCase().includes(q)
+    );
+  }, [categories, query]);
+
+  useEffect(() => {
+    const onDoc = (e) => {
+      if (!rootRef.current?.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  return (
+    <div ref={rootRef} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full text-left text-sm bg-white border-2 border-dashed border-brand/40 rounded-xl px-3 py-2.5 hover:border-brand"
+      >
+        {selected ? (
+          <>
+            <span className="block font-semibold text-slate-800">{selected.title}</span>
+            <span className="block text-[11px] text-slate-400">{selected.country} · {selected.href}</span>
+          </>
+        ) : (
+          <span className="font-semibold text-brand">Select destination category</span>
+        )}
+      </button>
+      {open && (
+        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border rounded-2xl shadow-xl overflow-hidden">
+          <input
+            className="w-full px-3 py-2 border-b text-sm"
+            placeholder="Search categories…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <ul className="max-h-48 overflow-y-auto">
+            {filtered.map((cat) => (
+              <li key={cat._id}>
+                <button
+                  type="button"
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-brand/5"
+                  onClick={() => {
+                    onSelect(cat);
+                    setOpen(false);
+                  }}
+                >
+                  {cat.title} <span className="text-slate-400">({cat.country})</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ─── Column editor ───────────────────────────────────── */
-const ColumnEditor = ({ columns, onChange }) => {
+const ColumnEditor = ({ columns, onChange, trips, categories = [], isDestinationsMenu = false }) => {
   const updateColumnTitle = (idx, val) => {
     const cols = deepClone(columns);
     cols[idx].title = val;
@@ -50,28 +307,64 @@ const ColumnEditor = ({ columns, onChange }) => {
 
   const removeColumn = (idx) => {
     const cols = columns.filter((_, i) => i !== idx);
-    onChange(cols.length ? cols : [{ title: '', items: [{ label: '', href: '' }] }]);
+    onChange(cols.length ? cols : [{ title: '', items: [{ label: '', tripId: '', href: '' }] }]);
   };
 
   const addColumn = () =>
-    onChange([...columns, { title: '', items: [{ label: '', href: '' }] }]);
+    onChange([...columns, { title: '', items: [{ label: '', tripId: '', href: '' }] }]);
 
-  const updateItem = (colIdx, itemIdx, field, val) => {
+  const updateItem = (colIdx, itemIdx, patch) => {
     const cols = deepClone(columns);
-    cols[colIdx].items[itemIdx][field] = val;
+    cols[colIdx].items[itemIdx] = { ...cols[colIdx].items[itemIdx], ...patch };
+    onChange(cols);
+  };
+
+  const linkCategory = (colIdx, itemIdx, cat) => {
+    const cols = deepClone(columns);
+    const item = cols[colIdx].items[itemIdx];
+    if (!cat) {
+      cols[colIdx].items[itemIdx] = { ...item, categoryId: '', itemType: 'category', tripId: '', href: '' };
+    } else {
+      cols[colIdx].items[itemIdx] = {
+        ...item,
+        itemType: 'category',
+        categoryId: cat._id,
+        tripId: '',
+        href: cat.href || '',
+        label: item.label?.trim() ? item.label : cat.title,
+      };
+    }
+    onChange(cols);
+  };
+
+  const linkTrip = (colIdx, itemIdx, trip) => {
+    const cols = deepClone(columns);
+    const item = cols[colIdx].items[itemIdx];
+    if (!trip) {
+      cols[colIdx].items[itemIdx] = { ...item, tripId: '', href: '' };
+    } else {
+      cols[colIdx].items[itemIdx] = {
+        ...item,
+        itemType: 'trip',
+        tripId: trip._id,
+        categoryId: '',
+        href: tripHref(trip.slug),
+        label: item.label?.trim() ? item.label : trip.title,
+      };
+    }
     onChange(cols);
   };
 
   const addItem = (colIdx) => {
     const cols = deepClone(columns);
-    cols[colIdx].items.push({ label: '', href: '' });
+    cols[colIdx].items.push({ label: '', tripId: '', href: '' });
     onChange(cols);
   };
 
   const removeItem = (colIdx, itemIdx) => {
     const cols = deepClone(columns);
     cols[colIdx].items = cols[colIdx].items.filter((_, i) => i !== itemIdx);
-    if (!cols[colIdx].items.length) cols[colIdx].items = [{ label: '', href: '' }];
+    if (!cols[colIdx].items.length) cols[colIdx].items = [{ label: '', tripId: '', href: '' }];
     onChange(cols);
   };
 
@@ -82,7 +375,6 @@ const ColumnEditor = ({ columns, onChange }) => {
           key={colIdx}
           className="border border-slate-200 rounded-2xl p-4 bg-slate-50/60 transition-all"
         >
-          {/* Column header */}
           <div className="flex items-center gap-2 mb-3">
             <div className="w-5 h-5 rounded-md bg-brand/10 text-brand text-[10px] font-black flex items-center justify-center flex-shrink-0">
               {colIdx + 1}
@@ -93,35 +385,51 @@ const ColumnEditor = ({ columns, onChange }) => {
               value={col.title}
               onChange={(e) => updateColumnTitle(colIdx, e.target.value)}
             />
-            <IconBtn
-              danger
-              title="Remove column"
-              onClick={() => removeColumn(colIdx)}
-            >
+            <IconBtn danger title="Remove column" onClick={() => removeColumn(colIdx)}>
               🗑
             </IconBtn>
           </div>
 
-          {/* Items */}
-          <div className="space-y-2 pl-7">
+          <div className="space-y-3 pl-7">
             {col.items.map((item, itemIdx) => (
-              <div key={itemIdx} className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-300 flex-shrink-0 mt-0.5" />
-                <input
-                  className="flex-1 text-sm bg-white border border-slate-200 rounded-xl px-3 py-1.5 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/40 transition-all"
-                  placeholder="Item label"
-                  value={item.label}
-                  onChange={(e) => updateItem(colIdx, itemIdx, 'label', e.target.value)}
-                />
-                <input
-                  className="flex-1 text-sm bg-white border border-slate-200 rounded-xl px-3 py-1.5 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/40 transition-all font-mono text-xs"
-                  placeholder="/path/to/page"
-                  value={item.href}
-                  onChange={(e) => updateItem(colIdx, itemIdx, 'href', e.target.value)}
-                />
-                <IconBtn danger title="Remove item" onClick={() => removeItem(colIdx, itemIdx)}>
-                  ✕
-                </IconBtn>
+              <div
+                key={itemIdx}
+                className="bg-white border border-slate-200 rounded-2xl p-3 space-y-2 shadow-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    className="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/40 transition-all"
+                    placeholder="Item label (menu text)"
+                    value={item.label}
+                    onChange={(e) => updateItem(colIdx, itemIdx, { label: e.target.value })}
+                  />
+                  <IconBtn danger title="Remove item" onClick={() => removeItem(colIdx, itemIdx)}>
+                    ✕
+                  </IconBtn>
+                </div>
+                {isDestinationsMenu ? (
+                  <CategorySearchSelect
+                    categories={categories}
+                    value={item.categoryId}
+                    onSelect={(cat) => linkCategory(colIdx, itemIdx, cat)}
+                  />
+                ) : (
+                  <TripSearchSelect
+                    trips={trips}
+                    value={item.tripId}
+                    onSelect={(trip) => linkTrip(colIdx, itemIdx, trip)}
+                  />
+                )}
+                {isDestinationsMenu && !item.categoryId && (
+                  <p className="text-[10px] text-amber-600 font-medium">
+                    Pick a destination category — links to its description + packages page.
+                  </p>
+                )}
+                {!isDestinationsMenu && !item.tripId && (
+                  <p className="text-[10px] text-amber-600 font-medium">
+                    Pick a trip above — the page link is created automatically.
+                  </p>
+                )}
               </div>
             ))}
             <button
@@ -147,15 +455,45 @@ const ColumnEditor = ({ columns, onChange }) => {
 };
 
 /* ─── MenuForm (create / edit) ────────────────────────── */
-const MenuForm = ({ initial, onSave, onCancel, isEdit }) => {
-  const [form, setForm] = useState(initial || emptyMenu());
+const MenuForm = ({ initial, onSave, onCancel, isEdit, trips, tripsLoading, categories, categoriesLoading }) => {
+  const [form, setForm] = useState(() => hydrateMenuTripIds(initial || emptyMenu(), trips));
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const isDestinationsMenu = /destination/i.test(form.label || '');
+
+  /* When trips finish loading, attach tripIds from legacy hrefs */
+  useEffect(() => {
+    if (!trips.length) return;
+    setForm((prev) => hydrateMenuTripIds(prev, trips));
+  }, [trips]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
+    const missing = (form.columns || []).some((col) =>
+      (col.items || []).some((item) => {
+        if (isDestinationsMenu) return !item.categoryId && !item.href;
+        return !item.tripId && !item.href;
+      })
+    );
+    if (missing) {
+      setError(
+        isDestinationsMenu
+          ? 'Every item must link to a destination category.'
+          : 'Every menu item must be linked to a trip.'
+      );
+      return;
+    }
+
     setSaving(true);
-    await onSave(form);
-    setSaving(false);
+    try {
+      await onSave(form);
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to save menu.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -163,7 +501,6 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit }) => {
       onSubmit={handleSubmit}
       className="bg-white rounded-3xl border border-slate-200 shadow-lg shadow-slate-100 overflow-hidden"
     >
-      {/* Form header */}
       <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-brand/5 via-transparent to-transparent border-b border-slate-100">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-brand text-white flex items-center justify-center shadow-md shadow-brand/30 text-base">
@@ -174,7 +511,9 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit }) => {
               {isEdit ? 'Edit Menu' : 'Create New Menu'}
             </h3>
             <p className="text-[11px] text-slate-400 font-medium">
-              {isEdit ? 'Update menu structure and links' : 'Add a new navigation menu'}
+              {isDestinationsMenu
+                ? 'Link items to destination categories (Day Tours, etc.)'
+                : 'Link each item to a trip — no path typing needed'}
             </p>
           </div>
         </div>
@@ -190,7 +529,6 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit }) => {
       </div>
 
       <div className="p-6 space-y-5">
-        {/* Basic fields */}
         <div className="grid sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
@@ -233,18 +571,38 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit }) => {
           </div>
         </div>
 
-        {/* Columns editor */}
         <div>
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5">
-            Columns & Links
-          </label>
+          <div className="flex items-center justify-between mb-2.5">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+              {isDestinationsMenu ? 'Columns & Category Links' : 'Columns & Trip Links'}
+            </label>
+            {isDestinationsMenu ? (
+              categoriesLoading ? (
+                <span className="text-[11px] text-slate-400 font-medium">Loading categories…</span>
+              ) : (
+                <span className="text-[11px] text-slate-400 font-medium">{categories.length} categories</span>
+              )
+            ) : tripsLoading ? (
+              <span className="text-[11px] text-slate-400 font-medium">Loading trips…</span>
+            ) : (
+              <span className="text-[11px] text-slate-400 font-medium">{trips.length} trips available</span>
+            )}
+          </div>
           <ColumnEditor
             columns={form.columns}
+            trips={trips}
+            categories={categories}
+            isDestinationsMenu={isDestinationsMenu}
             onChange={(cols) => setForm({ ...form, columns: cols })}
           />
         </div>
 
-        {/* Actions */}
+        {error && (
+          <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
+            {error}
+          </p>
+        )}
+
         <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
           {onCancel && (
             <button
@@ -257,7 +615,7 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit }) => {
           )}
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || tripsLoading}
             className="px-6 py-2.5 rounded-xl bg-brand text-white text-sm font-bold shadow-md shadow-brand/25 hover:shadow-lg hover:shadow-brand/30 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
           >
             {saving ? (
@@ -288,11 +646,15 @@ const MenuCard = ({ item, onEdit, onDelete }) => {
   };
 
   const totalLinks = item.columns?.reduce((n, c) => n + (c.items?.length || 0), 0) ?? 0;
+  const linkedTrips =
+    item.columns?.reduce(
+      (n, c) => n + (c.items?.filter((i) => i.tripId).length || 0),
+      0
+    ) ?? 0;
 
   return (
     <div className="group bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md hover:shadow-slate-100 hover:border-slate-300 transition-all duration-300">
       <div className="flex items-start justify-between gap-4">
-        {/* Left info */}
         <div className="flex items-start gap-3 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand/10 to-blue-500/10 text-brand flex items-center justify-center text-lg flex-shrink-0 shadow-sm">
             🍔
@@ -301,17 +663,14 @@ const MenuCard = ({ item, onEdit, onDelete }) => {
             <h4 className="font-bold text-slate-800 text-sm truncate">{item.label}</h4>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <Badge color={item.style === 'mega' ? 'emerald' : 'amber'}>{item.style}</Badge>
+              <span className="text-[11px] text-slate-400 font-medium">Order #{item.order}</span>
               <span className="text-[11px] text-slate-400 font-medium">
-                Order #{item.order}
-              </span>
-              <span className="text-[11px] text-slate-400 font-medium">
-                {item.columns?.length ?? 0} col · {totalLinks} links
+                {item.columns?.length ?? 0} col · {totalLinks} links · {linkedTrips} trips
               </span>
             </div>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <button
             onClick={() => onEdit(item)}
@@ -329,7 +688,6 @@ const MenuCard = ({ item, onEdit, onDelete }) => {
         </div>
       </div>
 
-      {/* Preview columns */}
       {item.columns?.length > 0 && (
         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {item.columns.map((col, i) => (
@@ -341,12 +699,10 @@ const MenuCard = ({ item, onEdit, onDelete }) => {
               )}
               <ul className="space-y-0.5">
                 {col.items?.slice(0, 4).map((it, j) => (
-                  <li
-                    key={j}
-                    className="text-xs text-slate-500 truncate flex items-center gap-1"
-                  >
+                  <li key={j} className="text-xs text-slate-500 truncate flex items-center gap-1">
                     <span className="w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
                     {it.label || <span className="italic text-slate-300">untitled</span>}
+                    {it.tripId && <span className="text-brand text-[9px] font-bold">TRIP</span>}
                   </li>
                 ))}
                 {(col.items?.length ?? 0) > 4 && (
@@ -366,9 +722,13 @@ const MenuCard = ({ item, onEdit, onDelete }) => {
 /* ─── Main Page ───────────────────────────────────────── */
 const MenusAdmin = () => {
   const [items, setItems] = useState([]);
+  const [trips, setTrips] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tripsLoading, setTripsLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [editTarget, setEditTarget] = useState(null); // menu being edited
+  const [editTarget, setEditTarget] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -380,9 +740,36 @@ const MenusAdmin = () => {
     }
   }, []);
 
+  const loadTrips = useCallback(async () => {
+    setTripsLoading(true);
+    try {
+      const res = await api.get('/trips');
+      const all = res.data.data || res.data || [];
+      setTrips(Array.isArray(all) ? all : []);
+    } catch {
+      setTrips([]);
+    } finally {
+      setTripsLoading(false);
+    }
+  }, []);
+
+  const loadCategories = useCallback(async () => {
+    setCategoriesLoading(true);
+    try {
+      const res = await api.get('/dashboard/destinations');
+      setCategories(res.data.data || []);
+    } catch {
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadTrips();
+    loadCategories();
+  }, [load, loadTrips, loadCategories]);
 
   const handleCreate = async (form) => {
     await api.post('/dashboard/menus', form);
@@ -402,20 +789,18 @@ const MenusAdmin = () => {
   };
 
   const startEdit = (item) => {
-    setEditTarget(deepClone(item));
+    setEditTarget(hydrateMenuTripIds(deepClone(item), trips));
     setShowCreate(false);
-    // Scroll to top of page smoothly
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <div className="space-y-8">
-      {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight">Menu Management</h1>
           <p className="text-slate-500 mt-1 text-sm font-medium">
-            Build and manage navigation menus with multi-column dropdowns — no code needed.
+            Build multi-column menus by linking items directly to trips from your database.
           </p>
         </div>
         {!showCreate && !editTarget && (
@@ -428,18 +813,28 @@ const MenusAdmin = () => {
         )}
       </div>
 
-      {/* Create form */}
+      <div className="bg-brand/5 border border-brand/20 rounded-2xl px-5 py-4 flex items-start gap-3">
+        <span className="text-xl flex-shrink-0">🔗</span>
+        <p className="text-sm text-brand/80 font-medium leading-relaxed">
+          For each menu item: set a <strong>column title</strong>, an <strong>item label</strong>, then{' '}
+          <strong>search &amp; pick a trip</strong>. The page path is created automatically (
+          <code className="text-xs bg-white px-1.5 py-0.5 rounded font-mono">/trips/slug</code>
+          ). No manual paths.
+        </p>
+      </div>
+
       {showCreate && (
         <div className="animate-[fadeInDown_0.2s_ease]">
           <MenuForm
             onSave={handleCreate}
             onCancel={() => setShowCreate(false)}
             isEdit={false}
+            trips={trips}
+            tripsLoading={tripsLoading}
           />
         </div>
       )}
 
-      {/* Edit form */}
       {editTarget && (
         <div className="animate-[fadeInDown_0.2s_ease]">
           <MenuForm
@@ -448,11 +843,12 @@ const MenusAdmin = () => {
             onSave={handleUpdate}
             onCancel={() => setEditTarget(null)}
             isEdit
+            trips={trips}
+            tripsLoading={tripsLoading}
           />
         </div>
       )}
 
-      {/* Divider when form is open */}
       {(showCreate || editTarget) && items.length > 0 && (
         <div className="flex items-center gap-3">
           <div className="flex-1 border-t border-slate-200" />
@@ -463,7 +859,6 @@ const MenusAdmin = () => {
         </div>
       )}
 
-      {/* Menu list */}
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -474,7 +869,7 @@ const MenusAdmin = () => {
         <div className="bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 py-16 flex flex-col items-center justify-center gap-3">
           <span className="text-4xl">🍔</span>
           <p className="font-bold text-slate-600">No menus yet</p>
-          <p className="text-sm text-slate-400">Click "New Menu" to create your first navigation menu.</p>
+          <p className="text-sm text-slate-400">Click &quot;New Menu&quot; to create your first navigation menu.</p>
           {!showCreate && (
             <button
               onClick={() => setShowCreate(true)}
@@ -487,12 +882,7 @@ const MenusAdmin = () => {
       ) : (
         <div className="space-y-3">
           {items.map((item) => (
-            <MenuCard
-              key={item._id}
-              item={item}
-              onEdit={startEdit}
-              onDelete={handleDelete}
-            />
+            <MenuCard key={item._id} item={item} onEdit={startEdit} onDelete={handleDelete} />
           ))}
         </div>
       )}
