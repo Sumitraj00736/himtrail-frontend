@@ -455,11 +455,21 @@ const ColumnEditor = ({ columns, onChange, trips, categories = [], isDestination
 };
 
 /* ─── MenuForm (create / edit) ────────────────────────── */
-const MenuForm = ({ initial, onSave, onCancel, isEdit, trips, tripsLoading, categories, categoriesLoading }) => {
+const MenuForm = ({
+  initial,
+  onSave,
+  onCancel,
+  isEdit,
+  trips,
+  tripsLoading,
+  categories = [],
+  categoriesLoading = false,
+}) => {
   const [form, setForm] = useState(() => hydrateMenuTripIds(initial || emptyMenu(), trips));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const isDestinationsMenu = /destination/i.test(form.label || '');
+  const isSectionMenu = /^luxury\s*travel$/i.test(form.label || '');
 
   /* When trips finish loading, attach tripIds from legacy hrefs */
   useEffect(() => {
@@ -471,7 +481,7 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit, trips, tripsLoading, cate
     e.preventDefault();
     setError('');
 
-    const missing = (form.columns || []).some((col) =>
+    const missing = !isSectionMenu && (form.columns || []).some((col) =>
       (col.items || []).some((item) => {
         if (isDestinationsMenu) return !item.categoryId && !item.href;
         return !item.tripId && !item.href;
@@ -513,7 +523,9 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit, trips, tripsLoading, cate
             <p className="text-[11px] text-slate-400 font-medium">
               {isDestinationsMenu
                 ? 'Link items to destination categories (Day Tours, etc.)'
-                : 'Link each item to a trip — no path typing needed'}
+                : isSectionMenu
+                  ? 'Auto-filled from trip display sections — edit trips to change links'
+                  : 'Link each item to a trip — no path typing needed'}
             </p>
           </div>
         </div>
@@ -571,6 +583,16 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit, trips, tripsLoading, cate
           </div>
         </div>
 
+        {isSectionMenu ? (
+          <div className="rounded-2xl border border-brand/20 bg-brand/5 px-5 py-4 text-sm text-brand/80 font-medium leading-relaxed">
+            This menu is filled automatically from trips tagged <strong>Luxury Travel</strong> in
+            the trip form. Edit trips under{' '}
+            <a href="/dashboard/trips" className="underline font-bold">
+              Trips Database
+            </a>{' '}
+            — manual links here are ignored on the site.
+          </div>
+        ) : (
         <div>
           <div className="flex items-center justify-between mb-2.5">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -580,7 +602,7 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit, trips, tripsLoading, cate
               categoriesLoading ? (
                 <span className="text-[11px] text-slate-400 font-medium">Loading categories…</span>
               ) : (
-                <span className="text-[11px] text-slate-400 font-medium">{categories.length} categories</span>
+                <span className="text-[11px] text-slate-400 font-medium">{(categories || []).length} categories</span>
               )
             ) : tripsLoading ? (
               <span className="text-[11px] text-slate-400 font-medium">Loading trips…</span>
@@ -596,6 +618,7 @@ const MenuForm = ({ initial, onSave, onCancel, isEdit, trips, tripsLoading, cate
             onChange={(cols) => setForm({ ...form, columns: cols })}
           />
         </div>
+        )}
 
         {error && (
           <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
@@ -831,6 +854,8 @@ const MenusAdmin = () => {
             isEdit={false}
             trips={trips}
             tripsLoading={tripsLoading}
+            categories={categories}
+            categoriesLoading={categoriesLoading}
           />
         </div>
       )}
@@ -845,6 +870,8 @@ const MenusAdmin = () => {
             isEdit
             trips={trips}
             tripsLoading={tripsLoading}
+            categories={categories}
+            categoriesLoading={categoriesLoading}
           />
         </div>
       )}

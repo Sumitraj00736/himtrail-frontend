@@ -217,14 +217,22 @@ const DependenciesAdmin = () => {
                 <p className="p-4 text-sm text-slate-400 text-center">No countries yet</p>
               ) : (
                 countries.map((c) => (
-                  <button
+                  <div
                     key={c._id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
                       setActiveCountry(c.name);
                       setRegionForm((f) => ({ ...f, countryName: c.name }));
                     }}
-                    className={`w-full flex items-center justify-between gap-2 px-4 py-3 text-left border-b border-slate-100 last:border-0 transition-colors ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setActiveCountry(c.name);
+                        setRegionForm((f) => ({ ...f, countryName: c.name }));
+                      }
+                    }}
+                    className={`w-full flex items-center justify-between gap-2 px-4 py-3 text-left border-b border-slate-100 last:border-0 transition-colors cursor-pointer ${
                       activeCountry === c.name ? 'bg-brand/10' : 'hover:bg-slate-50'
                     }`}
                   >
@@ -254,7 +262,7 @@ const DependenciesAdmin = () => {
                         🗑
                       </button>
                     </div>
-                  </button>
+                  </div>
                 ))
               )}
             </div>
