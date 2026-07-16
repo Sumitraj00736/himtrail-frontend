@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../services/api';
+import ImageUploader from '../../components/ImageUploader';
 
 const slugify = (value = '') =>
   String(value)
@@ -16,7 +17,7 @@ const emptyForm = () => ({
   shortDescription: '',
   longDescription: '',
   heroImage: '',
-  gallery: '',
+  gallery: [''],
   tripIds: [],
   order: 0,
   isActive: true,
@@ -59,7 +60,7 @@ const DestinationCategoryForm = () => {
           shortDescription: d.shortDescription || '',
           longDescription: d.longDescription || '',
           heroImage: d.heroImage || '',
-          gallery: (d.gallery || []).join('\n'),
+          gallery: d.gallery?.length ? d.gallery : [''],
           tripIds: (d.tripIds || []).map(String),
           order: d.order || 0,
           isActive: d.isActive !== false,
@@ -112,10 +113,7 @@ const DestinationCategoryForm = () => {
     const payload = {
       ...form,
       slug: slugify(form.slug),
-      gallery: form.gallery
-        .split('\n')
-        .map((s) => s.trim())
-        .filter(Boolean),
+      gallery: (form.gallery || []).map((s) => String(s || '').trim()).filter(Boolean),
       tripIds: form.tripIds,
     };
 
@@ -247,27 +245,71 @@ const DestinationCategoryForm = () => {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-            Hero image URL
+          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Hero image
           </label>
-          <input
+          <p className="text-[11px] text-slate-400 mb-3">
+            Upload a photo — it uploads automatically. No URL needed.
+          </p>
+          <ImageUploader
             value={form.heroImage}
-            onChange={(e) => handleChange('heroImage', e.target.value)}
-            placeholder="https://…"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm"
+            onChange={(url) => handleChange('heroImage', url)}
+            label="Upload hero photo"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-            Gallery images (one URL per line — hero collage)
-          </label>
-          <textarea
-            value={form.gallery}
-            onChange={(e) => handleChange('gallery', e.target.value)}
-            rows={4}
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-mono text-xs"
-          />
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Gallery (hero collage)
+              </label>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Upload multiple photos for the destination page collage.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setForm((prev) => ({ ...prev, gallery: [...(prev.gallery || []), ''] }))
+              }
+              className="text-xs font-bold text-brand hover:underline"
+            >
+              + Add photo
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {(form.gallery?.length ? form.gallery : ['']).map((url, idx) => (
+              <div
+                key={idx}
+                className="relative bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col gap-2"
+              >
+                <ImageUploader
+                  value={url}
+                  onChange={(newUrl) => {
+                    setForm((prev) => {
+                      const gallery = [...(prev.gallery || [''])];
+                      gallery[idx] = newUrl;
+                      return { ...prev, gallery };
+                    });
+                  }}
+                  label="Upload photo"
+                />
+                <button
+                  type="button"
+                  className="text-[11px] font-semibold text-slate-400 hover:text-red-500"
+                  onClick={() => {
+                    setForm((prev) => {
+                      const gallery = (prev.gallery || []).filter((_, i) => i !== idx);
+                      return { ...prev, gallery: gallery.length ? gallery : [''] };
+                    });
+                  }}
+                >
+                  ✕ Remove
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div>
