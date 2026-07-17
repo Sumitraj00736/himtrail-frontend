@@ -1,10 +1,15 @@
-import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import logo from '../../assets/logo.png';
 import DynamicMenu from './DynamicMenu';
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const searchRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,6 +18,36 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!searchOpen) return undefined;
+    const t = setTimeout(() => inputRef.current?.focus(), 220);
+    return () => clearTimeout(t);
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) return undefined;
+    const onDoc = (e) => {
+      if (!searchRef.current?.contains(e.target)) setSearchOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setSearchOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [searchOpen]);
+
+  const submitSearch = (e) => {
+    e?.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    setSearchOpen(false);
+    navigate(`/trips?q=${encodeURIComponent(q)}`);
+  };
 
   return (
     <header className="fixed top-0 w-full z-50 transition-all duration-300">
@@ -45,9 +80,9 @@ const Navbar = () => {
             : 'bg-white/95 backdrop-blur-sm border-slate-100 py-4'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
           {/* Logo & Brand */}
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
             <div className="relative overflow-hidden rounded-xl bg-slate-50 p-1 transition-transform duration-300 group-hover:scale-105">
               <img src={logo} alt="Himtrail logo" className="w-10 h-10 object-contain" />
             </div>
@@ -65,14 +100,64 @@ const Navbar = () => {
           <DynamicMenu />
 
           {/* Search & Dashboard CTA */}
-          <div className="hidden xl:flex items-center gap-4">
-            <div className="flex items-center border border-slate-200 hover:border-slate-300 focus-within:border-brand/50 focus-within:ring-2 focus-within:ring-brand/10 rounded-full px-3 py-1.5 w-60 bg-slate-50 transition-all duration-200">
-              <input
-                className="w-full text-xs bg-transparent outline-none text-slate-800 placeholder-slate-400"
-                placeholder="I am looking for ..."
-              />
-              <span className="text-brand/70 font-semibold cursor-pointer select-none">⌕</span>
+          <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
+            <div ref={searchRef} className="flex items-center h-10">
+              <form
+                onSubmit={submitSearch}
+                className={`h-10 flex items-center overflow-hidden rounded-full bg-slate-50 border border-slate-200 transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  searchOpen
+                    ? 'w-56 max-w-56 pl-4 pr-2 mr-2 opacity-100'
+                    : 'w-0 max-w-0 pl-0 pr-0 mr-0 border-transparent opacity-0 pointer-events-none'
+                }`}
+                style={{ transitionDuration: '350ms' }}
+              >
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full min-w-0 text-xs bg-transparent outline-none ring-0 border-0 focus:outline-none focus:ring-0 text-slate-800 placeholder-slate-400"
+                  placeholder="I am looking for..."
+                  tabIndex={searchOpen ? 0 : -1}
+                />
+                {query && searchOpen && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery('');
+                      inputRef.current?.focus();
+                    }}
+                    className="flex-shrink-0 w-6 h-6 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/80 text-sm leading-none"
+                    aria-label="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+              </form>
+
+              <button
+                type="button"
+                onClick={() => setSearchOpen((v) => !v)}
+                className={`nav-search-btn relative w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                  searchOpen
+                    ? 'bg-slate-800 text-white is-open'
+                    : 'bg-slate-50 text-brand border border-slate-200 hover:bg-slate-100'
+                }`}
+                aria-label={searchOpen ? 'Close search' : 'Open search'}
+                aria-expanded={searchOpen}
+              >
+                {!searchOpen && (
+                  <span className="nav-search-pulse pointer-events-none absolute inset-0 rounded-full border border-brand/30" />
+                )}
+                <span
+                  className={`nav-search-icon relative z-[1] text-base leading-none inline-block ${
+                    searchOpen ? 'is-close' : ''
+                  }`}
+                >
+                  {searchOpen ? '✕' : '⌕'}
+                </span>
+              </button>
             </div>
+
             <Link
               to="/dashboard"
               className="px-5 py-2 rounded-full bg-brand text-white text-xs font-semibold tracking-wider uppercase transition-all duration-300 hover:bg-brand-600 hover:shadow-glow hover:-translate-y-0.5 active:translate-y-0"

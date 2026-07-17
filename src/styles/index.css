@@ -185,3 +185,70 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Navbar search icon */
+@keyframes navSearchPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+
+@keyframes navSearchBob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  40% {
+    transform: translateY(-1.5px) rotate(-8deg);
+  }
+  70% {
+    transform: translateY(0.5px) rotate(4deg);
+  }
+}
+
+@keyframes navSearchPop {
+  0% {
+    transform: scale(0.6) rotate(-40deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.nav-search-pulse {
+  animation: navSearchPulse 2.4s ease-out infinite;
+}
+
+.nav-search-icon {
+  animation: navSearchBob 2.8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.nav-search-btn:hover .nav-search-icon {
+  animation: none;
+  transform: scale(1.15);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.nav-search-btn.is-open .nav-search-icon,
+.nav-search-icon.is-close {
+  animation: navSearchPop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-search-pulse,
+  .nav-search-icon {
+    animation: none !important;
+  }
+}

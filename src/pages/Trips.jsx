@@ -21,6 +21,7 @@ const Trips = () => {
   );
 
   const [filters, setFilters] = useState(initialFilters);
+  const searchQuery = (params.get('q') || '').trim().toLowerCase();
 
   useEffect(() => {
     dispatch(
@@ -32,6 +33,17 @@ const Trips = () => {
       })
     );
   }, [dispatch, filters]);
+
+  const visibleItems = useMemo(() => {
+    if (!searchQuery) return items;
+    return items.filter((trip) =>
+      [trip.title, trip.slug, trip.region, trip.destination, trip.category, trip.shortDescription]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(searchQuery)
+    );
+  }, [items, searchQuery]);
 
   // Loading skeleton helpers
   const skeletonCards = Array.from({ length: 6 });
@@ -67,7 +79,9 @@ const Trips = () => {
         {/* Results Counter */}
         <div className="flex justify-between items-center mb-6">
           <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
-            {status !== 'loading' ? `${items.length} adventures found` : 'Searching trails...'}
+            {status !== 'loading'
+              ? `${visibleItems.length} adventures found${searchQuery ? ` for “${params.get('q')}”` : ''}`
+              : 'Searching trails...'}
           </p>
         </div>
 
@@ -87,13 +101,13 @@ const Trips = () => {
           }
 
           {/* Normal Render */}
-          {status !== 'loading' && items.map((trip) => (
+          {status !== 'loading' && visibleItems.map((trip) => (
             <div key={trip._id}>
               <TripCard trip={trip} />
             </div>
           ))}
 
-          {status !== 'loading' && items.length === 0 && (
+          {status !== 'loading' && visibleItems.length === 0 && (
             <div className="col-span-full text-center py-20 bg-white border border-slate-100 rounded-3xl">
               <p className="text-slate-400 font-semibold">No trips found matching the selected filters.</p>
               <button 
