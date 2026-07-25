@@ -1,6 +1,15 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faClock,
+  faArrowUpRightDots,
+  faLocationDot,
+  faMountainSun,
+  faStreetView,
+  faArrowsDownToPeople,
+} from "@fortawesome/free-solid-svg-icons";
 
 /* ─── Region config ─────────────────────────────────────────── */
 const REGION_CONFIG = {

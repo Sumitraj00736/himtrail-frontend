@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import ImageUploader from '../../components/ImageUploader';
+import RichTextEditor from '../../components/RichTextEditor';
 
 /* Fallback when Dependencies are empty */
 const FALLBACK_COUNTRIES = ['Nepal', 'Tanzania', 'Bhutan', 'Tibet'];
@@ -591,15 +592,13 @@ const DestinationForm = () => {
               placeholder="A brief summary shown on cards..."
             />
           </Field>
-          <Field label="Long Description (HTML allowed)">
-            <textarea
-              className={textareaCls}
-              rows={6}
-              value={form.longDescription}
-              onChange={(e) => setForm({ ...form, longDescription: e.target.value })}
-              placeholder="Full description — HTML tags like <b>, <p>, <ul>, <li> are supported."
-            />
-          </Field>
+          <RichTextEditor
+            label="Long Description"
+            value={form.longDescription}
+            onChange={(html) => setForm({ ...form, longDescription: html })}
+            placeholder="Write the full destination description here..."
+            helperText="Supports bold, italic, underline, bullet lists, numbered lists, and links."
+          />
         </section>
 
         {/* ── Homepage Sections ── */}

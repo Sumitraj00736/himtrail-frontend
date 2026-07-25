@@ -146,6 +146,49 @@ body {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-brand to-sunrise-500;
 }
 
+/* CKEditor 5 integration */
+.rich-text-editor .ck.ck-editor__main > .ck-editor__editable {
+  min-height: 220px;
+  border: 0;
+  box-shadow: none;
+  padding: 1rem 1rem 1.1rem;
+}
+
+.rich-text-editor .ck.ck-editor__top {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rich-text-editor .ck.ck-toolbar {
+  border: 0;
+  background: #f8fafc;
+  padding: 0.5rem;
+}
+
+.rich-text-editor .ck.ck-toolbar .ck-toolbar__items {
+  flex-wrap: wrap;
+}
+
+.rich-text-editor .ck.ck-toolbar .ck-button {
+  border-radius: 0.75rem;
+}
+
+.rich-text-editor .ck.ck-focused {
+  box-shadow: none;
+}
+
+.rich-text-editor .ck.ck-editor__editable_inline {
+  border: 0;
+}
+
+.rich-text-editor .ck-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.rich-text-editor .ck-content figure {
+  margin: 1rem 0;
+}
+
 /* Timeline vertical connector */
 .timeline-line {
   position: absolute;

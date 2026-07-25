@@ -3,6 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import { sanitizeHtml } from '../utils/richText';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faClock,
+  faArrowUpRightDots,
+  faLocationDot,
+  faMountainSun,
+  faStreetView,
+  faArrowsDownToPeople,
+} from "@fortawesome/free-solid-svg-icons";
 
 const TripDetail = ({ apiPath = '/trips' }) => {
   const { slug } = useParams();
@@ -217,13 +226,37 @@ const TripDetail = ({ apiPath = '/trips' }) => {
             
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm">
               {[
-                { label: 'Duration', value: `${trip.duration} Days`, icon: '🕒' },
-                { label: 'Trip Grade', value: trip.tripGrade || 'Strenuous', icon: '⛰️' },
-                { label: 'Destination', value: trip.destinationLabel || trip.destination, icon: '📍' },
-                { label: 'Max Altitude', value: trip.maxAltitude || '5,545 m', icon: '🏔️' },
-                { label: 'Activity', value: trip.activity || 'Trek & Tour', icon: '🥾' },
-                { label: 'Group Size', value: trip.groupSize || '1-16 pax', icon: '👥' },
-              ].map((info, idx) => (
+  {
+  label: 'Duration',
+  value: `${trip.duration} Days`,
+  icon: <FontAwesomeIcon icon={faClock} />,
+},
+{
+  label: 'Trip Grade',
+  value: trip.tripGrade || 'Strenuous',
+  icon: <FontAwesomeIcon icon={faArrowUpRightDots} />,
+},
+{
+  label: 'Destination',
+  value: trip.destinationLabel || trip.destination,
+  icon: <FontAwesomeIcon icon={faLocationDot} />,
+},
+{
+  label: 'Max Altitude',
+  value: trip.maxAltitude || '5,545 m',
+  icon: <FontAwesomeIcon icon={faMountainSun} />,
+},
+{
+  label: 'Activity',
+  value: trip.activity || 'Trek & Tour',
+  icon: <FontAwesomeIcon icon={faStreetView} />,
+},
+{
+  label: 'Group Size',
+  value: trip.groupSize || '1-16 pax',
+  icon: <FontAwesomeIcon icon={faArrowsDownToPeople} />,
+},
+].map((info, idx) => (
                 <div key={idx} className="flex gap-3 items-start">
                   <span className="text-xl bg-white/10 w-9 h-9 rounded-xl flex items-center justify-center border border-white/10 shrink-0">
                     {info.icon}

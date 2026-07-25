@@ -2,8 +2,36 @@ export const sanitizeHtml = (html) => {
   if (!html) return '';
   const template = document.createElement('template');
   template.innerHTML = html;
-  const allowedTags = ['B', 'STRONG', 'I', 'EM', 'U', 'A', 'P', 'BR', 'UL', 'OL', 'LI', 'SPAN'];
-  const allowedAttrs = { A: ['href', 'target', 'rel'], SPAN: ['style'] };
+  const allowedTags = [
+    'B',
+    'STRONG',
+    'I',
+    'EM',
+    'U',
+    'A',
+    'P',
+    'DIV',
+    'BR',
+    'UL',
+    'OL',
+    'LI',
+    'FIGURE',
+    'FIGCAPTION',
+    'IMG',
+    'SPAN',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'BLOCKQUOTE',
+  ];
+  const allowedAttrs = {
+    A: ['href', 'target', 'rel'],
+    SPAN: ['style'],
+    IMG: ['src', 'alt', 'title', 'width', 'height', 'loading'],
+  };
 
   const walk = (node) => {
     [...node.children].forEach((child) => {

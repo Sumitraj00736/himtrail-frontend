@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../services/api';
 import ImageUploader from '../../components/ImageUploader';
+import RichTextEditor from '../../components/RichTextEditor';
 
 const slugify = (value = '') =>
   String(value)
@@ -232,17 +233,13 @@ const DestinationCategoryForm = () => {
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-            Long description (HTML allowed)
-          </label>
-          <textarea
-            value={form.longDescription}
-            onChange={(e) => handleChange('longDescription', e.target.value)}
-            rows={6}
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-mono text-xs"
-          />
-        </div>
+        <RichTextEditor
+          label="Long description"
+          value={form.longDescription}
+          onChange={(html) => handleChange('longDescription', html)}
+          placeholder="Write the full destination description here..."
+          helperText="Supports bold, italic, underline, bullet lists, numbered lists, and links."
+        />
 
         <div>
           <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
