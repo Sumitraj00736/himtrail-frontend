@@ -49,6 +49,7 @@ import {
 
 import "ckeditor5/ckeditor5.css";
 import { api } from "../services/api";
+import { getStoredToken } from "../utils/authStorage";
 
 const getUploadUrl = () => {
   const baseUrl = api.defaults.baseURL || "http://localhost:5000/api";
@@ -87,7 +88,7 @@ class CloudinaryUploadAdapter {
     xhr.open("POST", getUploadUrl(), true);
     xhr.responseType = "json";
 
-    const token = localStorage.getItem("himtrail_token");
+    const token = getStoredToken();
     if (token) {
       xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     }

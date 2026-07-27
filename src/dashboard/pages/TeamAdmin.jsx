@@ -7,6 +7,8 @@ const emptyMember = {
   role: '',
   image: '',
   bio: '',
+  phoneCountryCode: '+977',
+  phoneNumber: '',
   order: 0,
   isActive: true,
   socialLinks: {
@@ -53,6 +55,8 @@ const TeamAdmin = () => {
       role: member.role || '',
       image: member.image || '',
       bio: member.bio || '',
+      phoneCountryCode: member.phoneCountryCode || '+977',
+      phoneNumber: member.phoneNumber || '',
       order: member.order ?? 0,
       isActive: member.isActive ?? true,
       socialLinks: {
@@ -124,6 +128,11 @@ const TeamAdmin = () => {
     }));
   };
 
+  const phonePreview =
+    form.phoneCountryCode && form.phoneNumber
+      ? `${String(form.phoneCountryCode).trim()} ${String(form.phoneNumber).trim()}`
+      : '';
+
   return (
     <div className="space-y-8">
       {/* Page Header */}
@@ -193,6 +202,11 @@ const TeamAdmin = () => {
                       <p className="text-[10px] text-slate-400 font-semibold mt-1">
                         Order: {item.order} {item.bio ? '· Has Bio' : ''}
                       </p>
+                      {(item.phoneCountryCode || item.phoneNumber) && (
+                        <p className="text-[10px] text-emerald-600 font-semibold mt-1">
+                          WhatsApp: {(item.phoneCountryCode || '').trim()} {(item.phoneNumber || '').trim()}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -270,6 +284,30 @@ const TeamAdmin = () => {
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
               />
+            </div>
+
+            {/* WhatsApp Contact */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                WhatsApp Contact
+              </label>
+              <div className="grid grid-cols-[120px_1fr] gap-2">
+                <input
+                  className="w-full rounded-2xl border-slate-200 text-sm focus:border-brand focus:ring-brand"
+                  placeholder="+977"
+                  value={form.phoneCountryCode}
+                  onChange={(e) => setForm({ ...form, phoneCountryCode: e.target.value })}
+                />
+                <input
+                  className="w-full rounded-2xl border-slate-200 text-sm focus:border-brand focus:ring-brand"
+                  placeholder="Phone number"
+                  value={form.phoneNumber}
+                  onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+                />
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Saved as: {phonePreview || 'No WhatsApp number added yet'}
+              </p>
             </div>
 
             {/* Order & Active Toggle */}

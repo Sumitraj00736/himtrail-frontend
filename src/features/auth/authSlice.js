@@ -1,37 +1,40 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { api } from '../../services/api';
+import { clearAuthSession, getStoredAuth, saveAuthSession } from '../../utils/authStorage';
 
-const tokenKey = 'himtrail_token';
-
-const saveToken = (token) => {
-  if (token) localStorage.setItem(tokenKey, token);
-};
-
-const clearToken = () => localStorage.removeItem(tokenKey);
+const storedAuth = getStoredAuth();
 
 export const login = createAsyncThunk('auth/login', async (payload) => {
   const response = await api.post('/auth/login', payload);
-  saveToken(response.data.data.token);
+  saveAuthSession({
+    token: response.data.data.token,
+    user: response.data.data,
+  });
   return response.data.data;
 });
 
 export const register = createAsyncThunk('auth/register', async (payload) => {
   const response = await api.post('/auth/register', payload);
-  saveToken(response.data.data.token);
+  saveAuthSession({
+    token: response.data.data.token,
+    user: response.data.data,
+  });
   return response.data.data;
 });
 
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: null,
+    user: storedAuth.user || null,
     status: 'idle',
     error: null,
   },
   reducers: {
     logout(state) {
       state.user = null;
-      clearToken();
+      state.status = 'idle';
+      state.error = null;
+      clearAuthSession();
     },
   },
   extraReducers: (builder) => {

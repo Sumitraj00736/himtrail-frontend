@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../services/api';
+import { buildWhatsAppUrl } from '../config/company';
 
 const socialIcons = {
   facebook: (
@@ -46,6 +47,12 @@ const itemVariants = {
     },
   },
 };
+
+const WhatsAppIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M19.11 4.89A10.02 10.02 0 0 0 3.99 17.71L3 21l3.38-.89A10 10 0 1 0 19.11 4.89Zm-4.55 12.77c-.39.39-1.16.71-1.86.86-.25.05-.58.1-1.69-.36-1.11-.45-3.63-1.51-5.02-3.29-1.38-1.78-1.5-2.91-1.53-3.43-.03-.52.34-1.13.73-1.53.37-.38.78-.48 1.04-.48h.75c.24 0 .56-.09.87.66.31.77 1.05 2.68 1.14 2.88.09.19.14.42.02.68-.12.25-.18.4-.37.62-.19.22-.39.49-.56.66-.19.19-.4.4-.17.79.23.38 1.02 1.68 2.19 2.72 1.5 1.33 2.76 1.74 3.15 1.93.39.19.62.16.85-.1.22-.26.97-1.12 1.24-1.5.28-.38.56-.31.94-.19.38.12 2.4 1.13 2.82 1.34.42.21.7.31.8.48.09.17.09.99-.3 1.38Z" />
+  </svg>
+);
 
 const TeamSection = () => {
   const [team, setTeam] = useState([]);
@@ -175,6 +182,11 @@ const TeamSection = () => {
                   <p className="text-xs font-semibold text-brand-500 tracking-wide uppercase mt-1">
                     {member.role}
                   </p>
+                  {(member.phoneCountryCode || member.phoneNumber) && (
+                    <p className="text-[11px] text-slate-500 font-medium mt-2">
+                      WhatsApp: {(member.phoneCountryCode || '').trim()} {(member.phoneNumber || '').trim()}
+                    </p>
+                  )}
                   {member.bio && (
                     <p className="text-slate-500 text-xs mt-3.5 leading-relaxed line-clamp-3 whitespace-normal">
                       {member.bio}
@@ -182,26 +194,40 @@ const TeamSection = () => {
                   )}
                 </div>
 
-                {/* Social Links */}
-                {member.socialLinks && Object.values(member.socialLinks).some(Boolean) && (
-                  <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-50">
-                    {Object.entries(member.socialLinks).map(([platform, url]) => {
-                      if (!url) return null;
-                      return (
-                        <a
-                          key={platform}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-8 h-8 rounded-full bg-slate-50 hover:bg-brand hover:text-white text-slate-400 flex items-center justify-center transition-all duration-300 hover:scale-110"
-                          title={`${member.name} on ${platform}`}
-                        >
-                          {socialIcons[platform]}
-                        </a>
-                      );
-                    })}
+                <div className="mt-6 pt-4 border-t border-slate-50">
+                  <div className="flex items-center gap-3">
+                    {member.phoneCountryCode && member.phoneNumber && (
+                      <a
+                        href={buildWhatsAppUrl(member.phoneCountryCode, member.phoneNumber, `Hello ${member.name}`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-full bg-slate-50 hover:bg-emerald-500 hover:text-white text-slate-400 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                        title={`Chat with ${member.name} on WhatsApp`}
+                        aria-label={`Chat with ${member.name} on WhatsApp`}
+                      >
+                        <WhatsAppIcon />
+                      </a>
+                    )}
+
+                    {member.socialLinks && Object.values(member.socialLinks).some(Boolean) &&
+                      Object.entries(member.socialLinks).map(([platform, url]) => {
+                        if (!url) return null;
+                        return (
+                          <a
+                            key={platform}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-8 h-8 rounded-full bg-slate-50 hover:bg-brand hover:text-white text-slate-400 flex items-center justify-center transition-all duration-300 hover:scale-110"
+                            title={`${member.name} on ${platform}`}
+                            aria-label={`${member.name} on ${platform}`}
+                          >
+                            {socialIcons[platform]}
+                          </a>
+                        );
+                      })}
                   </div>
-                )}
+                </div>
               </div>
             </motion.div>
           ))}

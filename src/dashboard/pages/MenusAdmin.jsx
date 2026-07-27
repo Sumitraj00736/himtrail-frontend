@@ -224,24 +224,46 @@ const TripSearchSelect = ({ trips, value, onSelect }) => {
   );
 };
 
-/* ─── Searchable category picker (Destinations menu) ─── */
-const CategorySearchSelect = ({ categories, value, onSelect }) => {
+/* ─── Searchable mixed picker (Destinations menu) ─── */
+const MixedSearchSelect = ({ categories, trips, item, onSelectCategory, onSelectTrip }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const rootRef = useRef(null);
 
-  const selected = useMemo(
-    () => categories.find((c) => String(c._id) === String(value)) || null,
-    [categories, value]
-  );
+  const selected = useMemo(() => {
+    if (item?.categoryId) {
+      return {
+        type: 'category',
+        data: categories.find((c) => String(c._id) === String(item.categoryId)) || null,
+      };
+    }
+    if (item?.tripId) {
+      return {
+        type: 'trip',
+        data: trips.find((t) => String(t._id) === String(item.tripId)) || null,
+      };
+    }
+    return null;
+  }, [categories, trips, item?.categoryId, item?.tripId]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return categories;
-    return categories.filter((c) =>
-      [c.title, c.slug, c.country].filter(Boolean).join(' ').toLowerCase().includes(q)
-    );
-  }, [categories, query]);
+    const combined = [
+      ...categories.map((category) => ({ type: 'category', data: category })),
+      ...trips.map((trip) => ({ type: 'trip', data: trip })),
+    ];
+
+    const matches = combined.filter(({ type, data }) => {
+      if (!q) return true;
+      const haystack =
+        type === 'category'
+          ? [data.title, data.slug, data.country, data.href].filter(Boolean).join(' ')
+          : [data.title, data.slug, data.destination, data.region, data.category].filter(Boolean).join(' ');
+      return haystack.toLowerCase().includes(q);
+    });
+
+    return matches;
+  }, [categories, trips, query]);
 
   useEffect(() => {
     const onDoc = (e) => {
@@ -258,15 +280,21 @@ const CategorySearchSelect = ({ categories, value, onSelect }) => {
         onClick={() => setOpen((v) => !v)}
         className="w-full text-left text-sm bg-white border-2 border-dashed border-brand/40 rounded-xl px-3 py-2.5 hover:border-brand"
       >
-        {selected ? (
-          <>
-            <span className="block font-semibold text-slate-800">{selected.title}</span>
-            <span className="block text-[11px] text-slate-400">{selected.country} · {selected.href}</span>
-          </>
-        ) : (
-          <span className="font-semibold text-brand">Select destination category</span>
-        )}
-      </button>
+            {selected?.data ? (
+              <>
+                <span className="block font-semibold text-slate-800">{selected.data.title}</span>
+                <span className="block text-[11px] text-slate-400">
+                  {selected.type === 'category'
+                    ? `${selected.data.country} · ${selected.data.href}`
+                    : [selected.data.destination, selected.data.region, selected.data.category]
+                        .filter(Boolean)
+                        .join(' · ')}
+                </span>
+              </>
+            ) : (
+              <span className="font-semibold text-brand">Select destination or trip</span>
+            )}
+        </button>
       {open && (
         <div className="absolute z-50 left-0 right-0 mt-1 bg-white border rounded-2xl shadow-xl overflow-hidden">
           <input
@@ -277,16 +305,30 @@ const CategorySearchSelect = ({ categories, value, onSelect }) => {
           />
           <ul className="max-h-48 overflow-y-auto">
             {filtered.map((cat) => (
-              <li key={cat._id}>
+              <li key={`${cat.type}-${cat.data._id}`}>
                 <button
                   type="button"
                   className="w-full text-left px-3 py-2 text-sm hover:bg-brand/5"
                   onClick={() => {
-                    onSelect(cat);
+                    if (cat.type === 'category') {
+                      onSelectCategory(cat.data);
+                    } else {
+                      onSelectTrip(cat.data);
+                    }
                     setOpen(false);
                   }}
                 >
-                  {cat.title} <span className="text-slate-400">({cat.country})</span>
+                  <div className="font-medium">
+                    {cat.data.title}{' '}
+                    <span className="text-slate-400">
+                      ({cat.type === 'category' ? cat.data.country : cat.data.destination})
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400">
+                    {cat.type === 'category'
+                      ? `Destination category · ${cat.data.href || '/'}`
+                      : `Trip · ${[cat.data.region, cat.data.category].filter(Boolean).join(' · ')}`}
+                  </div>
                 </button>
               </li>
             ))}
@@ -408,10 +450,12 @@ const ColumnEditor = ({ columns, onChange, trips, categories = [], isDestination
                   </IconBtn>
                 </div>
                 {isDestinationsMenu ? (
-                  <CategorySearchSelect
+                  <MixedSearchSelect
                     categories={categories}
-                    value={item.categoryId}
-                    onSelect={(cat) => linkCategory(colIdx, itemIdx, cat)}
+                    trips={trips}
+                    item={item}
+                    onSelectCategory={(cat) => linkCategory(colIdx, itemIdx, cat)}
+                    onSelectTrip={(trip) => linkTrip(colIdx, itemIdx, trip)}
                   />
                 ) : (
                   <TripSearchSelect
@@ -422,7 +466,7 @@ const ColumnEditor = ({ columns, onChange, trips, categories = [], isDestination
                 )}
                 {isDestinationsMenu && !item.categoryId && (
                   <p className="text-[10px] text-amber-600 font-medium">
-                    Pick a destination category — links to its description + packages page.
+                    Pick a destination category or trip — the page link is created automatically.
                   </p>
                 )}
                 {!isDestinationsMenu && !item.tripId && (

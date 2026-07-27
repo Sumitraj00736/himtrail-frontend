@@ -1,4 +1,5 @@
 import logo from '../../assets/logo.png';
+import { company } from '../../config/company';
 
 const Footer = () => {
   const scrollToTop = () => {
@@ -30,11 +31,11 @@ const Footer = () => {
         <div className="md:col-span-2">
           <div className="flex items-center gap-3 mb-5">
             <img src={logo} alt="Himtrail logo" className="w-10 h-10 object-contain bg-white/5 p-1 rounded-xl" />
-            <p className="font-display text-2xl font-bold text-white tracking-wide">Himtrail</p>
+            <p className="font-display text-2xl font-bold text-white tracking-wide">{company.shortName}</p>
           </div>
           <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-            Leave only footprints, take only memories. Sustainable adventure travel
-            tailored to Himalayan journeys, summit expeditions, and wilderness crossings.
+            {company.name} is based in {company.address}, {company.country}. We create sustainable
+            Himalayan journeys, summit expeditions, and wilderness crossings.
           </p>
           
           {/* Social icons */}
@@ -47,14 +48,30 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Links Column 1 */}
+        {/* Official Details */}
         <div>
-          <p className="text-xs uppercase font-bold tracking-[0.2em] mb-5 text-white">Sustainability</p>
+          <p className="text-xs uppercase font-bold tracking-[0.2em] mb-5 text-white">Official Details</p>
           <ul className="space-y-3 text-sm text-slate-400">
-            <li className="hover:text-white transition-colors duration-200 cursor-pointer">CO2 Neutral Operations</li>
-            <li className="hover:text-white transition-colors duration-200 cursor-pointer">Carry Me Bag Campaign</li>
-            <li className="hover:text-white transition-colors duration-200 cursor-pointer">Eco-Partner Lodges</li>
-            <li className="hover:text-white transition-colors duration-200 cursor-pointer">Porter Protection Code</li>
+            <li className="flex items-start gap-2">
+              <span className="text-white">🏢</span>
+              <span>{company.name}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-white">🪪</span>
+              <span>Reg. No: {company.regNo}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-white">🧾</span>
+              <span>VAT No: {company.vatNo}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-white">📍</span>
+              <span>{company.address}, {company.country}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-white">📮</span>
+              <span>PO Box: {company.poBox}</span>
+            </li>
           </ul>
         </div>
 
@@ -62,9 +79,12 @@ const Footer = () => {
         <div>
           <p className="text-xs uppercase font-bold tracking-[0.2em] mb-5 text-white">Contact</p>
           <ul className="space-y-3 text-sm text-slate-400">
-            <li className="flex items-center gap-2">📧 hello@himtrail.com</li>
-            <li className="flex items-center gap-2">📞 +1 (555) 014-7711</li>
-            <li className="flex items-center gap-2">📍 Kathmandu · New York</li>
+            <li className="flex items-center gap-2">📧 {company.email}</li>
+            <li className="flex items-center gap-2">📞 {company.telephone}</li>
+            <li className="flex items-center gap-2">📱 {company.mobile}</li>
+            <li className="flex items-center gap-2">🌐 {company.website}</li>
+            <li className="flex items-center gap-2">👤 Key Person: {company.keyPerson}</li>
+            <li className="flex items-center gap-2">📅 Established: {company.establishmentDate}</li>
           </ul>
         </div>
       </div>
@@ -72,7 +92,7 @@ const Footer = () => {
       {/* Footer Bottom */}
       <div className="border-t border-brand-800/40 text-center py-6 bg-brand-950/40 text-xs text-slate-500 relative">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span>© 2026 Himtrail. All rights reserved.</span>
+          <span>© 2026 {company.shortName}. All rights reserved.</span>
           <button 
             onClick={scrollToTop}
             className="text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors duration-200"
