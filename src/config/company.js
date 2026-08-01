@@ -1,6 +1,6 @@
 export const company = {
   name: 'Him- Trail Travel & Treks Pvt. Ltd',
-  shortName: 'Himtrail',
+  shortName: 'Him-Trail',
   regNo: '95283/069/070',
   vatNo: '600657565',
   address: 'Koteshwor, Kathmandu',
