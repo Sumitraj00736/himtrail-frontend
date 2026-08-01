@@ -226,7 +226,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
       <div className="sticky top-[89px] md:top-[98px] z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex gap-5 sm:gap-8 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 overflow-x-auto no-scrollbar py-3.5 sm:py-4">
-            {['overview', 'itinerary', 'expect', 'map', 'dates', 'faqs', 'reviews'].map((id) => (
+            {['overview', 'useful-information', 'itinerary', 'expect', 'map', 'dates', 'faqs', 'reviews'].map((id) => (
               <a
                 key={id}
                 href={`#${id}`}
@@ -304,6 +304,25 @@ const TripDetail = ({ apiPath = '/trips' }) => {
               }}
             />
           </div>
+
+          {(trip.usefulInformationTitle || trip.usefulInformationShortDescription || trip.usefulInformationLongDescription) && (
+            <div id="useful-information" className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-premium">
+              <h3 className="text-xl font-bold text-slate-800 font-display mb-3">
+                {trip.usefulInformationTitle || 'Useful Information'}
+              </h3>
+              {trip.usefulInformationShortDescription && (
+                <p className="text-slate-600 text-sm md:text-base leading-relaxed mb-5">
+                  {trip.usefulInformationShortDescription}
+                </p>
+              )}
+              {trip.usefulInformationLongDescription && (
+                <div
+                  className="prose prose-sm md:prose-base max-w-none text-slate-600 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(trip.usefulInformationLongDescription) }}
+                />
+              )}
+            </div>
+          )}
 
           {/* Gallery / You'll See */}
           <div id="expect" className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-premium">

@@ -24,6 +24,9 @@ const EMPTY_FORM = {
   heroImage: '',
   shortDescription: '',
   longDescription: '',
+  usefulInformationTitle: '',
+  usefulInformationShortDescription: '',
+  usefulInformationLongDescription: '',
   tripGrade: '',
   maxAltitude: '',
   groupSize: '',
@@ -201,6 +204,9 @@ const TripForm = () => {
           heroImage: t.heroImage || '',
           shortDescription: t.shortDescription || '',
           longDescription: t.longDescription || '',
+          usefulInformationTitle: t.usefulInformationTitle || '',
+          usefulInformationShortDescription: t.usefulInformationShortDescription || '',
+          usefulInformationLongDescription: t.usefulInformationLongDescription || '',
           tripGrade: t.tripGrade || '',
           maxAltitude: t.maxAltitude || '',
           groupSize: t.groupSize || '',
@@ -423,6 +429,38 @@ const TripForm = () => {
             onChange={(html) => setForm({ ...form, longDescription: html })}
             placeholder="Write the full trip description here..."
             helperText="Supports bold, italic, underline, bullet lists, numbered lists, and links."
+          />
+        </section>
+
+        {/* ── Useful Information ── */}
+        <section className="bg-slate-50 border border-slate-200 rounded-3xl p-6 space-y-4">
+          <div>
+            <h2 className="font-bold text-slate-700 text-base">Useful Information</h2>
+            <p className="text-xs text-slate-400 mt-1">Extra guidance displayed on the public trip details page.</p>
+          </div>
+          <Field label="Information Title">
+            <input
+              className={inputCls}
+              value={form.usefulInformationTitle}
+              onChange={(e) => setForm({ ...form, usefulInformationTitle: e.target.value })}
+              placeholder="Useful Information Before You Go"
+            />
+          </Field>
+          <Field label="Short Description">
+            <textarea
+              className={textareaCls}
+              rows={3}
+              value={form.usefulInformationShortDescription}
+              onChange={(e) => setForm({ ...form, usefulInformationShortDescription: e.target.value })}
+              placeholder="A short introduction to help travelers prepare for this trip..."
+            />
+          </Field>
+          <RichTextEditor
+            label="Long Description"
+            value={form.usefulInformationLongDescription}
+            onChange={(html) => setForm({ ...form, usefulInformationLongDescription: html })}
+            placeholder="Add detailed preparation, packing, safety, permit, or travel information..."
+            helperText="Supports headings, formatting, lists, links, tables, and images."
           />
         </section>
 
