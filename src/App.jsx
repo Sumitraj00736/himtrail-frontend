@@ -1,4 +1,5 @@
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import Trips from './pages/Trips';
@@ -26,8 +27,20 @@ import DestinationCategoryForm from './dashboard/pages/DestinationCategoryForm';
 import DependenciesAdmin from './dashboard/pages/DependenciesAdmin';
 import DestinationCategory from './pages/DestinationCategory';
 
+const ScrollToTop = () => {
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname, search]);
+
+  return null;
+};
+
 const App = () => (
-  <Routes>
+  <>
+    <ScrollToTop />
+    <Routes>
     {/* Public site routes — use the site Layout (Navbar + Footer) */}
     <Route
       path="/*"
@@ -68,7 +81,8 @@ const App = () => (
       <Route path="destinations/new" element={<DestinationCategoryForm />} />
       <Route path="destinations/:id" element={<DestinationCategoryForm />} />
     </Route>
-  </Routes>
+    </Routes>
+  </>
 );
 
 export default App;

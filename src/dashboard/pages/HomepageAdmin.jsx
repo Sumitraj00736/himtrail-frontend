@@ -9,6 +9,7 @@ const emptyForm = () => ({
   heroCtaLabel: '',
   heroCtaUrl: '',
   heroImage: '',
+  heroImages: [],
   aboutTitle: '',
   aboutBody: '',
 });
@@ -40,7 +41,12 @@ const HomepageAdmin = () => {
       .get('/dashboard/homepage')
       .then((res) => {
         if (res.data.data) {
-          setForm({ ...emptyForm(), ...res.data.data });
+          const homepage = res.data.data;
+          setForm({
+            ...emptyForm(),
+            ...homepage,
+            heroImages: homepage.heroImages?.length ? homepage.heroImages : homepage.heroImage ? [homepage.heroImage] : [],
+          });
         }
       })
       .catch(() => setError('Could not load homepage settings'))
@@ -48,6 +54,25 @@ const HomepageAdmin = () => {
   }, []);
 
   const set = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const updateHeroImage = (index, value) => {
+    setForm((prev) => {
+      const heroImages = [...prev.heroImages];
+      if (value) heroImages[index] = value;
+      else heroImages.splice(index, 1);
+      return { ...prev, heroImages, heroImage: heroImages[0] || '' };
+    });
+  };
+
+  const moveHeroImage = (index, direction) => {
+    setForm((prev) => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.heroImages.length) return prev;
+      const heroImages = [...prev.heroImages];
+      [heroImages[index], heroImages[target]] = [heroImages[target], heroImages[index]];
+      return { ...prev, heroImages, heroImage: heroImages[0] || '' };
+    });
+  };
 
   const save = async (e) => {
     e.preventDefault();
@@ -59,12 +84,12 @@ const HomepageAdmin = () => {
       'heroSubtitle',
       'heroCtaLabel',
       'heroCtaUrl',
-      'heroImage',
       'aboutTitle',
       'aboutBody',
     ];
     const missing = required.find((k) => !String(form[k] || '').trim());
-    if (missing) {
+    const firstHeroImage = form.heroImages.find((image) => String(image || '').trim());
+    if (missing || !firstHeroImage) {
       setError('Please fill all required fields before saving');
       return;
     }
@@ -76,7 +101,8 @@ const HomepageAdmin = () => {
         heroSubtitle: form.heroSubtitle.trim(),
         heroCtaLabel: form.heroCtaLabel.trim(),
         heroCtaUrl: form.heroCtaUrl.trim(),
-        heroImage: form.heroImage.trim(),
+        heroImage: firstHeroImage.trim(),
+        heroImages: form.heroImages.filter((image) => String(image || '').trim()),
         aboutTitle: form.aboutTitle.trim(),
         aboutBody: form.aboutBody.trim(),
       });
@@ -195,24 +221,45 @@ const HomepageAdmin = () => {
                   />
                 </Field>
               </div>
-              <Field label="Hero image">
-                <ImageUploader
-                  value={form.heroImage}
-                  onChange={(url) => set('heroImage', url)}
-                  label="Upload hero image"
-                />
-                <input
-                  className={`${inputCls} mt-3 font-mono text-xs`}
-                  value={form.heroImage}
-                  onChange={(e) => set('heroImage', e.target.value)}
-                  placeholder="Or paste image URL…"
-                />
-              </Field>
-              {form.heroImage && (
-                <div className="rounded-2xl overflow-hidden border border-slate-200 h-40 bg-slate-100">
-                  <img src={form.heroImage} alt="Hero preview" className="w-full h-full object-cover" />
+              <Field label="Hero slider images" hint="The first image is shown first. Add at least one image, then drag order with the arrow buttons.">
+                <div className="space-y-4">
+                  {form.heroImages.map((image, index) => (
+                    <div key={`${image}-${index}`} className="p-4 rounded-2xl border border-slate-200 bg-slate-50">
+                      <div className="flex items-start gap-4">
+                        <div className="w-28 h-20 rounded-xl overflow-hidden border border-slate-200 bg-white shrink-0">
+                          {image && <img src={image} alt={`Hero slide ${index + 1}`} className="w-full h-full object-cover" />}
+                        </div>
+                        <div className="min-w-0 flex-1 space-y-3">
+                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Slide {index + 1}</p>
+                          <input
+                            className={`${inputCls} font-mono text-xs`}
+                            value={image}
+                            onChange={(e) => updateHeroImage(index, e.target.value)}
+                            placeholder="Paste image URL…"
+                          />
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => moveHeroImage(index, -1)} disabled={index === 0} className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold disabled:opacity-40">Move left</button>
+                            <button type="button" onClick={() => moveHeroImage(index, 1)} disabled={index === form.heroImages.length - 1} className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold disabled:opacity-40">Move right</button>
+                            <button type="button" onClick={() => updateHeroImage(index, '')} className="px-3 py-1.5 rounded-lg bg-red-50 border border-red-100 text-red-600 text-xs font-semibold">Remove</button>
+                          </div>
+                        </div>
+                      </div>
+                      <ImageUploader
+                        value=""
+                        onChange={(url) => updateHeroImage(index, url)}
+                        label="Upload replacement"
+                      />
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, heroImages: [...prev.heroImages, ''] }))}
+                    className="px-4 py-2.5 rounded-xl border border-dashed border-brand/40 text-brand text-sm font-bold hover:bg-brand/5"
+                  >
+                    Add slider image
+                  </button>
                 </div>
-              )}
+              </Field>
             </div>
           </div>
         )}

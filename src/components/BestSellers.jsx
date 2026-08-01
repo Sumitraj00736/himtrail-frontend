@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import TripCard from './TripCard';
 import { CarouselArrow, CarouselDots, useSmoothCarousel } from './ScrollCarousel';
+import { FontAwesomeIcon, faArrowRight, faTrophy } from '../utils/homeIcons';
 
 const CARDS_PER_PAGE = 3;
 
@@ -31,7 +32,7 @@ const BestSellers = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-brand/5 text-brand flex items-center justify-center text-xs font-bold border border-brand/10">BEST</div>
+            <div className="w-14 h-14 rounded-2xl bg-brand/5 text-brand flex items-center justify-center text-xl border border-brand/10"><FontAwesomeIcon icon={faTrophy} /></div>
             <div>
               <p className="text-xs uppercase font-bold tracking-[0.25em] text-sunrise-500">TRAVELERS' CHOICE</p>
               <h2 className="section-title mt-1 text-slate-800 font-display">Top Best Sellers</h2>
@@ -45,7 +46,7 @@ const BestSellers = () => {
               </>
             )}
             <Link to="/trips" className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 hover:-translate-y-0.5">
-              Explore More →
+              Explore More <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
             </Link>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../services/api';
+import { FontAwesomeIcon, faArrowRight, faCompass, faPlay } from '../utils/homeIcons';
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ const Hero = () => {
   const [dest, setDest] = useState('');
   const [activity, setActivity] = useState('');
   const [duration, setDuration] = useState('');
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [sliderPaused, setSliderPaused] = useState(false);
 
   useEffect(() => {
     api.get('/content/homepage').then((res) => {
@@ -57,19 +60,47 @@ const Hero = () => {
     navigate(`/trips?${params.toString()}`);
   };
 
-  const heroImage =
-    content?.heroImage ||
-    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=2000&auto=format&fit=crop';
+  const heroImages = (content?.heroImages?.length ? content.heroImages : [content?.heroImage]).filter(Boolean);
+  const slides = heroImages.length
+    ? heroImages
+    : ['https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=2000&auto=format&fit=crop'];
+
+  useEffect(() => {
+    setActiveSlide((current) => Math.min(current, slides.length - 1));
+  }, [slides.length]);
+
+  useEffect(() => {
+    if (sliderPaused || slides.length <= 1) return undefined;
+    const timer = setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [sliderPaused, slides.length]);
+
+  const goToSlide = (index) => {
+    setActiveSlide(index);
+    setSliderPaused(true);
+  };
 
   return (
     <section className="relative min-h-[90vh] flex flex-col justify-between text-white overflow-hidden bg-slate-950">
-      {/* Background Image with Scale Parallax Effect */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center opacity-65 scale-105 transition-all duration-1000"
-        style={{ 
-          backgroundImage: `url(${heroImage})`,
-        }}
-      />
+      {/* Background image slider */}
+      <div
+        className="absolute inset-0"
+        onMouseEnter={() => setSliderPaused(true)}
+        onMouseLeave={() => setSliderPaused(false)}
+        onFocus={() => setSliderPaused(true)}
+        onBlur={() => setSliderPaused(false)}
+      >
+        {slides.map((image, index) => (
+          <div
+            key={image}
+            aria-hidden={index !== activeSlide}
+            className={`absolute inset-0 bg-cover bg-center scale-105 transition-opacity duration-1000 ${index === activeSlide ? 'opacity-65' : 'opacity-0'}`}
+            style={{ backgroundImage: `url(${image})` }}
+          />
+        ))}
+      </div>
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent z-0" />
 
       {/* Floating Ambient Glow */}
@@ -106,17 +137,33 @@ const Hero = () => {
             to={content?.heroCtaUrl || '/trips'}
             className="px-8 py-4 bg-brand hover:bg-brand/90 text-white rounded-full text-xs font-bold uppercase tracking-[0.25em] transition-all duration-300 shadow-lg shadow-brand/20 hover:shadow-xl hover:-translate-y-0.5"
           >
-            {content?.heroCtaLabel || 'Explore More →'}
+            {content?.heroCtaLabel || 'Explore More'} <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
           </Link>
           <button
             className="w-12 h-12 rounded-full bg-white/10 hover:bg-white text-white hover:text-slate-900 flex items-center justify-center font-bold border border-white/20 transition-all duration-300 backdrop-blur-md shadow-md"
             type="button"
             aria-label="Play video"
           >
-            ▶
+            <FontAwesomeIcon icon={faPlay} />
           </button>
         </motion.div>
       </div>
+
+      {slides.length > 1 && (
+        <div className="absolute z-20 bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2" role="tablist" aria-label="Hero images">
+          {slides.map((image, index) => (
+            <button
+              key={image}
+              type="button"
+              onClick={() => goToSlide(index)}
+              role="tab"
+              aria-selected={index === activeSlide}
+              aria-label={`Show hero image ${index + 1}`}
+              className={`h-1.5 rounded-full transition-all ${index === activeSlide ? 'w-8 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/80'}`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Floating Interactive Search Panel */}
       <div className="relative z-10 max-w-5xl w-full mx-auto px-6 pb-12">
@@ -127,9 +174,9 @@ const Hero = () => {
           className="bg-white/90 backdrop-blur-2xl text-slate-800 rounded-3xl shadow-2xl p-6 md:p-8 grid md:grid-cols-4 gap-4 items-end border border-white/80"
         >
           <div className="md:col-span-4 lg:col-span-4 font-black text-slate-800 text-xs tracking-[0.2em] uppercase mb-2">
-            🧭 Find Your Next Holiday
+            <FontAwesomeIcon icon={faCompass} className="mr-1.5" /> Find Your Next Holiday
           </div>
-          
+
           <div className="flex flex-col gap-2">
             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 pl-1">Destination</span>
             <select 

@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
+import { FontAwesomeIcon, faArrowLeft, faArrowRight } from '../utils/homeIcons';
 
 /* ─── Arrow button ────────────────────────────────────────────── */
 export const CarouselArrow = ({ dir, onClick, disabled }) => (
@@ -12,7 +13,7 @@ export const CarouselArrow = ({ dir, onClick, disabled }) => (
         : 'bg-white border-slate-200 text-slate-600 hover:bg-brand hover:border-brand hover:text-white shadow-sm hover:shadow-md active:scale-95'
     }`}
   >
-    {dir === 'prev' ? '←' : '→'}
+    <FontAwesomeIcon icon={dir === 'prev' ? faArrowLeft : faArrowRight} />
   </button>
 );
 

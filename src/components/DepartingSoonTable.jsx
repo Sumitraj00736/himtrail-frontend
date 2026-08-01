@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
+import { FontAwesomeIcon, faArrowRight, faCalendarDays } from '../utils/homeIcons';
 
 const DepartingSoonTable = () => {
   const [rows, setRows] = useState([]);
@@ -68,7 +69,7 @@ const DepartingSoonTable = () => {
             to="/trips"
             className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 self-start md:self-auto hover:-translate-y-0.5"
           >
-            Explore all departures →
+            Explore all departures <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
           </Link>
         </div>
 
@@ -101,7 +102,7 @@ const DepartingSoonTable = () => {
                       {dep.slug ? <Link to={`/trips/${dep.slug}`} className="hover:text-brand">{dep.title}</Link> : dep.title}
                     </div>
                     <div className="col-span-4 text-xs font-medium">
-                      🗓 {dep.startDate} - {dep.endDate}
+                      <FontAwesomeIcon icon={faCalendarDays} className="mr-1.5" />{dep.startDate} - {dep.endDate}
                     </div>
                     <div className="col-span-2">
                       <span className={`inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${getStatusStyle(dep.status)}`}>

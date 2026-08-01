@@ -1,9 +1,11 @@
+import { FontAwesomeIcon, faHandshake, faLeaf, faSeedling } from '../utils/homeIcons';
+
 const Sustainability = () => (
   <section className="reveal reveal-up bg-[#f8fafc]">
     <div className="max-w-6xl mx-auto px-6 py-20">
       <div className="text-center mb-12">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand/5 border border-brand/10 text-brand text-xs font-bold uppercase tracking-wider">
-          🌱 VOLUNTEER COMMUNITY
+          <FontAwesomeIcon icon={faSeedling} /> VOLUNTEER COMMUNITY
         </div>
         <h2 className="section-title mt-4 text-slate-800 font-display">Responsible Travel & Giving Back</h2>
         <p className="text-sm text-slate-500 mt-2 max-w-xl mx-auto">We believe in travel that enriches the soul while preserving local ecosystems and uplift communities.</p>
@@ -19,12 +21,12 @@ const Sustainability = () => (
           <div className="space-y-4">
             {[
               {
-                icon: '🤝',
+                icon: faHandshake,
                 title: 'Ukhubaari School Support',
                 desc: 'Supporting government schools in Ukhubaari with computer labs, library books, and direct student sponsorships for underprivileged children.'
               },
               {
-                icon: '🌿',
+                icon: faLeaf,
                 title: 'Village Independence Initiatives',
                 desc: 'Skills development workshops and financial independence training for women in remote rural villages across Nepal.'
               }
@@ -34,7 +36,7 @@ const Sustainability = () => (
                 className="bg-white rounded-3xl border border-slate-100 hover:border-slate-200/50 shadow-premium hover:shadow-premium-hover p-6 flex gap-5 transition-all duration-300 transform hover:-translate-y-0.5"
               >
                 <div className="w-12 h-12 rounded-2xl bg-brand/5 text-brand flex items-center justify-center text-xl shrink-0">
-                  {initiative.icon}
+                  <FontAwesomeIcon icon={initiative.icon} />
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-800 text-sm">{initiative.title}</h4>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
+import { FontAwesomeIcon, faArrowRight, faCompass, faGoogle, faQuoteLeft, faStar } from '../utils/homeIcons';
 
 const Reviews = () => {
   const [reviews, setReviews] = useState([]);
@@ -26,7 +27,7 @@ const Reviews = () => {
             to="/trips"
             className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 self-start sm:self-auto hover:-translate-y-0.5"
           >
-            View all reviews →
+            View all reviews <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
           </Link>
         </div>
 
@@ -37,7 +38,7 @@ const Reviews = () => {
               className="relative bg-slate-50/50 rounded-3xl p-8 border border-slate-100 hover:border-slate-200/50 shadow-premium hover:shadow-premium-hover transition-all duration-300 flex flex-col justify-between"
             >
               {/* Quote Icon overlay */}
-              <div className="absolute top-6 right-8 text-5xl text-brand/5 select-none font-serif">“</div>
+              <FontAwesomeIcon icon={faQuoteLeft} className="absolute top-6 right-8 text-5xl text-brand/5" />
 
               <div>
                 <div className="flex items-center gap-4">
@@ -52,10 +53,9 @@ const Reviews = () => {
                   </div>
                 </div>
                 
-                {/* SVG Gold Stars */}
                 <div className="mt-5 flex gap-1 text-amber-500 text-xs">
                   {Array.from({ length: review.rating || 5 }).map((_, i) => (
-                    <span key={i}>★</span>
+                    <FontAwesomeIcon key={i} icon={faStar} />
                   ))}
                 </div>
                 
@@ -76,13 +76,13 @@ const Reviews = () => {
         {/* Social Proof Badges */}
         <div className="mt-14 pt-10 border-t border-slate-100 flex flex-wrap items-center justify-center gap-6 md:gap-12 text-slate-500 text-xs font-semibold uppercase tracking-wider">
           <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100 hover:bg-slate-100/50 transition-colors duration-200">
-            <span className="text-emerald-600">🟢</span> Tripadvisor <span className="text-amber-500">★★★★★</span> <span className="text-slate-400">300+</span>
+            <FontAwesomeIcon icon={faCompass} className="text-emerald-600" /> Tripadvisor <span className="text-amber-500"><FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /></span> <span className="text-slate-400">300+</span>
           </div>
           <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100 hover:bg-slate-100/50 transition-colors duration-200">
-            <span className="text-red-500">🔴</span> Google Reviews <span className="text-amber-500">★★★★★</span> <span className="text-slate-400">100+</span>
+            <FontAwesomeIcon icon={faGoogle} className="text-red-500" /> Google Reviews <span className="text-amber-500"><FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /></span> <span className="text-slate-400">100+</span>
           </div>
           <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100 hover:bg-slate-100/50 transition-colors duration-200">
-            <span className="text-emerald-500">⭐</span> Trustpilot <span className="text-amber-500">★★★★★</span> <span className="text-slate-400">99+</span>
+            <FontAwesomeIcon icon={faStar} className="text-emerald-500" /> Trustpilot <span className="text-amber-500"><FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /> <FontAwesomeIcon icon={faStar} /></span> <span className="text-slate-400">99+</span>
           </div>
         </div>
       </div>

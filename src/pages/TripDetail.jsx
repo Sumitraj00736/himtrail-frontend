@@ -208,24 +208,24 @@ const TripDetail = ({ apiPath = '/trips' }) => {
     <div className="bg-[#f8fafc]">
       {/* Banner / Hero Section */}
       <section
-        className="relative h-[480px] bg-cover bg-center text-white"
+        className="relative h-[360px] sm:h-[480px] bg-cover bg-center text-white"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent z-0" />
-        <div className="relative z-10 max-w-6xl mx-auto px-6 h-full flex flex-col justify-end pb-16">
-          <div className="text-xs uppercase tracking-[0.25em] text-slate-300 font-semibold mb-3">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 h-full flex flex-col justify-end pb-10 sm:pb-16">
+          <div className="text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.25em] text-slate-300 font-semibold mb-3">
             Destinations &gt; {trip.destination} &gt; {trip.region}
           </div>
-          <h1 className="text-3xl md:text-5xl font-display font-bold leading-tight tracking-tight max-w-3xl">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-display font-bold leading-tight tracking-tight max-w-3xl break-words">
             {trip.title}
           </h1>
         </div>
       </section>
 
       {/* Tabs Navigation */}
-      <div className="sticky top-[98px] z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex gap-8 text-[11px] font-bold uppercase tracking-wider text-slate-500 overflow-x-auto no-scrollbar py-4">
+      <div className="sticky top-[89px] md:top-[98px] z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex gap-5 sm:gap-8 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 overflow-x-auto no-scrollbar py-3.5 sm:py-4">
             {['overview', 'itinerary', 'expect', 'map', 'dates', 'faqs', 'reviews'].map((id) => (
               <a
                 key={id}
@@ -240,15 +240,15 @@ const TripDetail = ({ apiPath = '/trips' }) => {
       </div>
 
       {/* Grid Layout: Main info & Sidebar */}
-      <section className="max-w-6xl mx-auto px-6 py-12 grid lg:grid-cols-[1.3fr_0.7fr] gap-10 items-start">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 grid lg:grid-cols-[1.3fr_0.7fr] gap-8 lg:gap-10 items-start">
         {/* Main Column */}
         <div className="space-y-10">
           {/* Key facts card */}
-          <div className="bg-brand text-white rounded-3xl p-8 shadow-premium relative overflow-hidden">
+          <div className="bg-brand text-white rounded-3xl p-5 sm:p-8 shadow-premium relative overflow-hidden">
             <div className="absolute -right-12 -top-12 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
             <h2 className="text-lg font-bold font-display uppercase tracking-wider mb-6">Trip Key Facts</h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6 text-sm">
               {[
   {
   label: 'Duration',
@@ -285,7 +285,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
                   <span className="text-xl bg-white/10 w-9 h-9 rounded-xl flex items-center justify-center border border-white/10 shrink-0">
                     {info.icon}
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-slate-300 text-[10px] uppercase font-bold tracking-wider">{info.label}</p>
                     <p className="font-semibold text-white mt-0.5 text-sm">{info.value}</p>
                   </div>
@@ -295,7 +295,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
           </div>
 
           {/* Overview */}
-          <div id="overview" className="bg-white rounded-3xl p-8 border border-slate-100 shadow-premium">
+          <div id="overview" className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-premium">
             <h3 className="text-xl font-bold text-slate-800 font-display mb-6">Overview</h3>
             <div
               className="prose max-w-none text-slate-600 text-sm md:text-base leading-relaxed"
@@ -306,9 +306,9 @@ const TripDetail = ({ apiPath = '/trips' }) => {
           </div>
 
           {/* Gallery / You'll See */}
-          <div id="expect" className="bg-white rounded-3xl p-8 border border-slate-100 shadow-premium">
+          <div id="expect" className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-premium">
             <h3 className="text-xl font-bold text-slate-800 font-display mb-6">Gallery</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {[
                 ...trip.gallery,
                 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=800&auto=format&fit=crop',
@@ -325,7 +325,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
           </div>
 
           {/* Itinerary Accordion with Timeline styling */}
-          <div id="itinerary" className="bg-white rounded-3xl p-8 border border-slate-100 shadow-premium">
+          <div id="itinerary" className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-premium">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-slate-800 font-display">Itinerary</h3>
               <button
@@ -354,11 +354,11 @@ const TripDetail = ({ apiPath = '/trips' }) => {
 
                     <div className="border border-slate-100 hover:border-slate-200/50 rounded-2xl overflow-hidden shadow-sm transition-all duration-300">
                       <div
-                        className="flex justify-between items-center cursor-pointer p-4 bg-slate-50/50 hover:bg-slate-50 text-slate-800"
+                        className="flex justify-between items-start gap-3 cursor-pointer p-4 bg-slate-50/50 hover:bg-slate-50 text-slate-800"
                         onClick={() => toggleItinerary(day.day)}
                       >
-                        <span className="font-bold text-sm">{day.title}</span>
-                        <span className="text-brand text-lg font-bold">{isOpen ? '−' : '+'}</span>
+                        <span className="font-bold text-sm min-w-0 break-words">{day.title}</span>
+                        <span className="text-brand text-lg font-bold shrink-0">{isOpen ? '−' : '+'}</span>
                       </div>
 
                       <div
@@ -376,8 +376,8 @@ const TripDetail = ({ apiPath = '/trips' }) => {
           </div>
 
           {/* Included / Excluded tabs panel */}
-          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-premium">
-            <div className="flex gap-4 border-b border-slate-100 pb-4">
+          <div className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-premium">
+            <div className="flex gap-3 sm:gap-4 border-b border-slate-100 pb-4 overflow-x-auto">
               <button
                 className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all duration-200 ${
                   tab === 'included' ? 'border-sunrise-500 text-brand' : 'border-transparent text-slate-400 hover:text-slate-600'
@@ -410,7 +410,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
 
           {/* Map Section */}
           {trip.mapImage && (
-            <div id="map" className="bg-white rounded-3xl p-8 border border-slate-100 shadow-premium">
+            <div id="map" className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-premium">
               <h3 className="text-xl font-bold text-slate-800 font-display mb-6">Trek Map</h3>
               {trip.mapDescription && (
                 <p className="text-slate-600 text-sm md:text-base leading-relaxed mb-6">{trip.mapDescription}</p>
@@ -430,7 +430,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
           )}
 
           {/* Dates & Price section */}
-          <div id="dates" className="bg-white rounded-3xl p-8 border border-slate-100 shadow-premium">
+          <div id="dates" className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-premium">
             <h3 className="text-xl font-bold text-slate-800 font-display mb-6">Upcoming Dates</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600">
@@ -473,7 +473,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
           </div>
 
           {/* FAQs Accordion */}
-          <div id="faqs" className="bg-white rounded-3xl p-8 border border-slate-100 shadow-premium">
+          <div id="faqs" className="bg-white rounded-3xl p-5 sm:p-8 border border-slate-100 shadow-premium">
             <h3 className="text-xl font-bold text-slate-800 font-display mb-6">Frequently Asked Questions</h3>
             <div className="space-y-3">
               {faqs.map((faq, idx) => {
@@ -481,11 +481,11 @@ const TripDetail = ({ apiPath = '/trips' }) => {
                 return (
                   <div key={idx} className="border border-slate-100 hover:border-slate-200/50 rounded-2xl overflow-hidden shadow-sm transition-all duration-300">
                     <div
-                      className="flex justify-between items-center cursor-pointer p-4 bg-slate-50/50 text-slate-800 font-semibold text-sm"
+                      className="flex justify-between items-start gap-3 cursor-pointer p-4 bg-slate-50/50 text-slate-800 font-semibold text-sm"
                       onClick={() => toggleFaq(idx)}
                     >
-                      <span>{faq.question}</span>
-                      <span className="text-brand font-bold">{isOpen ? '−' : '+'}</span>
+                      <span className="min-w-0 break-words">{faq.question}</span>
+                      <span className="text-brand font-bold shrink-0">{isOpen ? '−' : '+'}</span>
                     </div>
                     <div
                       className={`transition-all duration-300 bg-white px-5 overflow-hidden ${
@@ -502,7 +502,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
         </div>
 
         {/* Sticky Sidebar (Booking detail summary) */}
-        <div className="lg:sticky lg:top-36 bg-white rounded-3xl shadow-premium border border-slate-100 p-6 space-y-6">
+        <div className="lg:sticky lg:top-36 bg-white rounded-3xl shadow-premium border border-slate-100 p-5 sm:p-6 space-y-6">
           <div>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Starting From</p>
             <div className="text-2xl font-bold text-sunrise-500 mt-1 flex items-baseline gap-2">
@@ -511,7 +511,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
             </div>
           </div>
 
-          <div className="space-y-3 border-t border-b border-slate-100 py-4 text-xs text-slate-500 font-semibold space-y-2.5">
+          <div className="space-y-2.5 border-t border-b border-slate-100 py-4 text-xs text-slate-500 font-semibold">
             <div className="flex gap-2.5 items-center">
               <span className="text-emerald-500 text-sm">✓</span>
               <span>Best Price Guarantee</span>
@@ -642,12 +642,12 @@ const TripDetail = ({ apiPath = '/trips' }) => {
       {/* Stepped Booking Modal */}
       <AnimatePresence>
         {bookingOpen && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl w-full max-w-lg shadow-premium overflow-hidden border border-slate-100"
+              className="bg-white rounded-3xl w-full max-w-lg max-h-[calc(100vh-1.5rem)] overflow-y-auto shadow-premium border border-slate-100"
             >
               {/* Header */}
               <div className="px-6 py-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
@@ -659,24 +659,24 @@ const TripDetail = ({ apiPath = '/trips' }) => {
               </div>
 
               {/* Step Progress Connector */}
-              <div className="px-6 pt-5 pb-2 flex justify-between items-center">
+              <div className="px-4 sm:px-6 pt-5 pb-2 flex justify-between items-center">
                 <div className="flex gap-2 items-center">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${bookingStep >= 1 ? 'bg-brand text-white' : 'bg-slate-100 text-slate-400'}`}>1</div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Contact</span>
+                  <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-slate-500">Contact</span>
                 </div>
                 <div className="h-px bg-slate-200 flex-grow mx-4" />
                 <div className="flex gap-2 items-center">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${bookingStep >= 2 ? 'bg-brand text-white' : 'bg-slate-100 text-slate-400'}`}>2</div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Preferences</span>
+                  <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-slate-500">Preferences</span>
                 </div>
                 <div className="h-px bg-slate-200 flex-grow mx-4" />
                 <div className="flex gap-2 items-center">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${bookingStep >= 3 ? 'bg-brand text-white' : 'bg-slate-100 text-slate-400'}`}>3</div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Confirm</span>
+                  <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-slate-500">Confirm</span>
                 </div>
               </div>
 
-              <div className="p-6">
+              <div className="p-5 sm:p-6">
                 {/* Step 1 Form */}
                 {bookingStep === 1 && (
                   <div className="space-y-4">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
+import { FontAwesomeIcon, faHandshake, faHourglassHalf, faPlane } from '../utils/homeIcons';
 
 const AboutCompany = () => {
   const [content, setContent] = useState(null);
@@ -45,17 +46,17 @@ const AboutCompany = () => {
         <div className="mt-14 grid md:grid-cols-3 gap-8">
           {[
             {
-              icon: '✈️',
+              icon: faPlane,
               title: 'Travel - Learn - Share',
               desc: 'For every traveler, the world is full of choices. We curate personal, meaningful journeys that foster deep cultural connections.'
             },
             {
-              icon: '🤝',
+              icon: faHandshake,
               title: 'Enthusiastic Team',
               desc: 'Our greatest strength is our team of passionate, licensed Sherpas, guides, and medical professionals trained in high-altitude safety.'
             },
             {
-              icon: '⏱️',
+              icon: faHourglassHalf,
               title: 'Flexible Customizations',
               desc: 'Travel at your own pace. Whether tailormade private routes or fixed departures, we match your pace and priorities.'
             }
@@ -65,7 +66,7 @@ const AboutCompany = () => {
               className="bg-brand text-white rounded-3xl p-8 text-left shadow-premium hover:shadow-premium-hover transition-all duration-300 transform hover:-translate-y-1"
             >
               <div className="text-4xl bg-white/10 w-14 h-14 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner">
-                {item.icon}
+                <FontAwesomeIcon icon={item.icon} />
               </div>
               <h3 className="mt-6 text-lg font-bold font-display tracking-wide">{item.title}</h3>
               <p className="text-sm text-slate-200 mt-3 leading-relaxed">

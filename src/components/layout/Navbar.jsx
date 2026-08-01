@@ -33,18 +33,15 @@ const Navbar = () => {
       try {
         setLoadingSuggestions(true);
 
-        const res = await api.get(`/search?q=${encodeURIComponent(q)}`, {
+        const res = await api.get(`/trips?q=${encodeURIComponent(q)}`, {
           signal: controller.signal,
         });
-
-        console.log("[search] raw response:", res); // TEMP DEBUG - remove after fixing
-        console.log("[search] res.data:", res.data); // TEMP DEBUG - remove after fixing
 
         setSuggestions(res.data.data || []);
         setShowSuggestions(true);
       } catch (err) {
         if (err.name !== "CanceledError" && err.name !== "AbortError") {
-          console.error("[search] request failed:", err); // TEMP DEBUG - remove after fixing
+          console.error("Search suggestions request failed:", err);
         }
       } finally {
         setLoadingSuggestions(false);
@@ -196,7 +193,7 @@ const Navbar = () => {
                 )}
               </form>
               {searchOpen && showSuggestions && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-[999]">
+                <div className="absolute top-full left-0 mt-2 w-72 max-h-80 overflow-y-auto bg-white rounded-xl shadow-xl border border-slate-200 z-[999]">
                   {loadingSuggestions && (
                     <div className="px-4 py-3 text-sm text-slate-400">
                       Searching...
@@ -208,7 +205,7 @@ const Navbar = () => {
                     suggestions.map((item) => (
                       <Link
                         key={item._id}
-                        to={`/trip/${item.slug}`}
+                        to={`/trips/${item.slug}`}
                         onClick={() => {
                           setSearchOpen(false);
                           setShowSuggestions(false);

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { FontAwesomeIcon, faClock, faMountain, faStar } from '../utils/homeIcons';
 
 /**
  * Shared card component that works with real Trip objects from the database.
@@ -10,7 +11,7 @@ const TripCard = ({ trip }) => {
   const priceDisplay = trip.price ? `US$${trip.price.toLocaleString()}` : trip.price;
   const oldPriceDisplay = trip.oldPrice ? `US$${trip.oldPrice.toLocaleString()}` : trip.oldPrice;
   const reviewCount = trip.reviews?.count ?? trip.reviews ?? '';
-  const ratingDisplay = trip.reviews?.rating ? `★ ${trip.reviews.rating}` : '★ 5.0';
+  const rating = trip.reviews?.rating || 5;
   const durationDisplay = trip.duration ? `${trip.duration} Days` : '';
 
   const card = (
@@ -19,7 +20,7 @@ const TripCard = ({ trip }) => {
         {image ? (
           <img src={image} alt={trip.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-200 text-5xl">🏔️</div>
+          <div className="w-full h-full flex items-center justify-center text-slate-200 text-5xl"><FontAwesomeIcon icon={faMountain} /></div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <span className="absolute top-4 left-4 bg-brand text-white text-[10px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full shadow-sm">
@@ -35,7 +36,7 @@ const TripCard = ({ trip }) => {
             )}
           </div>
           <div className="text-amber-500 text-xs font-semibold flex items-center gap-1">
-            <span>{ratingDisplay}</span>
+            <span><FontAwesomeIcon icon={faStar} className="mr-1" />{rating}</span>
             {reviewCount ? (
               <>
                 <span className="text-slate-300 font-normal">|</span>
@@ -49,7 +50,7 @@ const TripCard = ({ trip }) => {
         </h3>
         {durationDisplay && (
           <div className="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium flex items-center gap-1.5">
-            <span>🕒 {durationDisplay}</span>
+            <span><FontAwesomeIcon icon={faClock} className="mr-1.5" />{durationDisplay}</span>
           </div>
         )}
       </div>

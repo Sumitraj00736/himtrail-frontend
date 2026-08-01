@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../services/api';
 import TripCard from './TripCard';
+import { FontAwesomeIcon, faArrowRight, faGem } from '../utils/homeIcons';
 
 const fallbackCards = [
   { tag: 'Premium Experience', title: 'Luxury Everest Base Camp Trek - 12 Days', duration: '12 Days', price: 'US$3,490', oldPrice: 'US$4,200', reviews: '45 Reviews', image: 'https://images.unsplash.com/photo-1544735716-166f3636f4c4?q=80&w=1200&auto=format&fit=crop' },
@@ -35,14 +36,14 @@ const LuxuryTravel = () => {
       <div className="max-w-6xl mx-auto px-6 py-20">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-brand/5 text-brand flex items-center justify-center text-xl border border-brand/10">✨</div>
+            <div className="w-14 h-14 rounded-2xl bg-brand/5 text-brand flex items-center justify-center text-xl border border-brand/10"><FontAwesomeIcon icon={faGem} /></div>
             <div>
               <p className="text-xs uppercase font-bold tracking-[0.25em] text-sunrise-500">PREMIUM EXPERIENCES</p>
               <h2 className="section-title mt-1 text-slate-800 font-display">Luxury Travel</h2>
             </div>
           </div>
           <Link to="/trips" className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 self-start sm:self-auto hover:-translate-y-0.5">
-            Explore Luxury →
+            Explore Luxury <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
           </Link>
         </div>
 

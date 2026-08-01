@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import TripCard from './TripCard';
 import { CarouselArrow, CarouselDots, useSmoothCarousel } from './ScrollCarousel';
+import { FontAwesomeIcon, faArrowRight, faStar } from '../utils/homeIcons';
 
 const CARDS_PER_PAGE = 3;
 
@@ -31,7 +32,7 @@ const FeaturedTrips = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-brand/5 text-brand flex items-center justify-center text-xl border border-brand/10">⭐</div>
+            <div className="w-14 h-14 rounded-2xl bg-brand/5 text-brand flex items-center justify-center text-xl border border-brand/10"><FontAwesomeIcon icon={faStar} /></div>
             <div>
               <p className="text-xs uppercase font-bold tracking-[0.25em] text-sunrise-500">OUR FEATURED TRIPS 2026</p>
               <h2 className="section-title mt-1 text-slate-800 font-display">Special Adventure Offers</h2>
@@ -45,7 +46,7 @@ const FeaturedTrips = () => {
               </>
             )}
             <Link to="/trips" className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 hover:-translate-y-0.5">
-              View All Trips →
+              View All Trips <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
             </Link>
           </div>
         </div>

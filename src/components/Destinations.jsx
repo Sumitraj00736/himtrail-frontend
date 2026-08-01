@@ -2,21 +2,22 @@ import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { CarouselArrow } from './ScrollCarousel';
+import { FontAwesomeIcon, RegionIcon, faArrowLeft, faArrowRight, faClock, faGem, faLocationDot, faMountain, faPause, faPlay } from '../utils/homeIcons';
 
 /* ─── Region config ─────────────────────────────────────────── */
 const REGION_CONFIG = {
-  Everest:         { from: '#1a3a5c', to: '#2d6a9f', icon: '🏔️' },
-  Annapurna:       { from: '#1a4a2e', to: '#2d7a4f', icon: '🌿' },
-  Langtang:        { from: '#3a2a1a', to: '#7a5a2d', icon: '🌲' },
-  Manaslu:         { from: '#2a1a3a', to: '#5a2d7a', icon: '⛰️' },
-  'Upper Mustang': { from: '#4a1a1a', to: '#9a3a2a', icon: '🏜️' },
-  Dolpo:           { from: '#1a2a4a', to: '#2a5a8a', icon: '💧' },
-  Tibet:           { from: '#4a3a1a', to: '#8a6a2a', icon: '🕌' },
-  Bhutan:          { from: '#2a3a1a', to: '#5a7a2a', icon: '🐉' },
-  Tanzania:        { from: '#3a2a1a', to: '#8a5a2a', icon: '🦁' },
+  Everest:         { from: '#1a3a5c', to: '#2d6a9f' },
+  Annapurna:       { from: '#1a4a2e', to: '#2d7a4f' },
+  Langtang:        { from: '#3a2a1a', to: '#7a5a2d' },
+  Manaslu:         { from: '#2a1a3a', to: '#5a2d7a' },
+  'Upper Mustang': { from: '#4a1a1a', to: '#9a3a2a' },
+  Dolpo:           { from: '#1a2a4a', to: '#2a5a8a' },
+  Tibet:           { from: '#4a3a1a', to: '#8a6a2a' },
+  Bhutan:          { from: '#2a3a1a', to: '#5a7a2a' },
+  Tanzania:        { from: '#3a2a1a', to: '#8a5a2a' },
 };
 
-const DEFAULT_COLORS = { from: '#1a3a5c', to: '#2d6a9f', icon: '📍' };
+const DEFAULT_COLORS = { from: '#1a3a5c', to: '#2d6a9f' };
 
 /* ─── Section pill shown on card ───────────────────────────── */
 const SectionPill = ({ label }) => (
@@ -27,7 +28,7 @@ const SectionPill = ({ label }) => (
         : 'bg-amber-400/20 text-amber-100 ring-1 ring-amber-300/30'
     }`}
   >
-    {label === 'Trek in Nepal' ? '🏔️' : '✨'} {label}
+    <FontAwesomeIcon icon={label === 'Trek in Nepal' ? faMountain : faGem} /> {label}
   </span>
 );
 
@@ -87,8 +88,8 @@ const DestinationCard = ({ item }) => {
             <span className="text-white/80 text-xs font-semibold">{packageLabel}</span>
           ) : (
             <div className="flex items-center gap-3 text-white/70 text-xs font-medium">
-              {item.duration != null && <span>⏱ {item.duration}d</span>}
-              {item.maxAltitude && <span>⛰ {item.maxAltitude}</span>}
+              {item.duration != null && <span><FontAwesomeIcon icon={faClock} className="mr-1" />{item.duration}d</span>}
+              {item.maxAltitude && <span><FontAwesomeIcon icon={faMountain} className="mr-1" />{item.maxAltitude}</span>}
             </div>
           )}
           {item.price != null && (
@@ -108,7 +109,7 @@ const DestinationCard = ({ item }) => {
         <div className="mt-3 overflow-hidden max-h-0 group-hover:max-h-10 transition-all duration-300">
           <div className="flex items-center gap-1.5 text-white/80 text-xs font-semibold">
             <span>Explore destination</span>
-            <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+            <FontAwesomeIcon icon={faArrowRight} className="group-hover:translate-x-1 transition-transform duration-300" />
           </div>
         </div>
       </div>
@@ -240,7 +241,7 @@ const Destinations = () => {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-8">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand to-blue-500 text-white flex items-center justify-center text-xl shadow-lg shadow-brand/20">
-              📍
+              <FontAwesomeIcon icon={faLocationDot} />
             </div>
             <div>
               <p className="text-xs uppercase font-bold tracking-[0.25em] text-sunrise-500">
@@ -270,7 +271,7 @@ const Destinations = () => {
                   strokeLinecap="round"
                 />
               </svg>
-              <span className="relative text-sm leading-none">{paused ? '▶' : '❚❚'}</span>
+              <FontAwesomeIcon className="relative text-sm" icon={paused ? faPlay : faPause} />
             </button>
             <CarouselArrow dir="prev" onClick={() => { pause(); scrollBy(-1); }} disabled={atStart} />
             <CarouselArrow dir="next" onClick={() => { pause(); scrollBy(1); }} disabled={atEnd} />
@@ -278,7 +279,7 @@ const Destinations = () => {
               to="/trips"
               className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 self-start sm:self-auto hover:-translate-y-0.5"
             >
-              View All Trips →
+              View All Trips <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
             </Link>
           </div>
         </div>
@@ -301,7 +302,7 @@ const Destinations = () => {
                   }`}
                   style={isActive ? { background: `linear-gradient(135deg, ${cfg.from}, ${cfg.to})` } : {}}
                 >
-                  {tab !== 'All' && <span className="text-base leading-none">{cfg.icon}</span>}
+                  {tab !== 'All' && <RegionIcon region={tab} className="text-base" />}
                   {tab}
                   <span
                     className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold ${
@@ -325,7 +326,7 @@ const Destinations = () => {
           </div>
         ) : visible.length === 0 ? (
           <div className="text-center py-14 text-slate-400 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-            <p className="text-3xl mb-3">📍</p>
+            <FontAwesomeIcon icon={faLocationDot} className="text-3xl mb-3" />
             <p className="font-semibold text-slate-500">No destinations in {activeTab} yet</p>
           </div>
         ) : (
@@ -333,8 +334,6 @@ const Destinations = () => {
             key={activeTab}
             ref={scrollRef}
             onScroll={onScroll}
-            onMouseEnter={pause}
-            onMouseLeave={resume}
             onTouchStart={pause}
             onTouchEnd={resume}
             onFocus={pause}
@@ -351,7 +350,7 @@ const Destinations = () => {
         {/* Scroll hint */}
         {visible.length > 3 && (
           <p className="text-center text-xs text-slate-400 mt-4 font-medium sm:hidden">
-            ← Scroll to explore more →
+            <FontAwesomeIcon icon={faArrowLeft} className="mr-1" /> Scroll to explore more <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
           </p>
         )}
       </div>
