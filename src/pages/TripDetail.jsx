@@ -223,7 +223,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
       </section>
 
       {/* Tabs Navigation */}
-      <div className="sticky top-[110px] z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
+      <div className="sticky top-[98px] z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex gap-8 text-[11px] font-bold uppercase tracking-wider text-slate-500 overflow-x-auto no-scrollbar py-4">
             {['overview', 'itinerary', 'expect', 'map', 'dates', 'faqs', 'reviews'].map((id) => (

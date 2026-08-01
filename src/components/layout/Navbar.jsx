@@ -1,23 +1,68 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
-import logo from '../../assets/logo.png';
-import DynamicMenu from './DynamicMenu';
-import { company } from '../../config/company';
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import logo from "../../assets/logo.png";
+import DynamicMenu from "./DynamicMenu";
+import { company } from "../../config/company";
+import { api } from "../../services/api";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const searchRef = useRef(null);
   const inputRef = useRef(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+
+    const q = query.trim();
+
+    if (q.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const timer = setTimeout(async () => {
+      try {
+        setLoadingSuggestions(true);
+
+        const res = await api.get(`/search?q=${encodeURIComponent(q)}`, {
+          signal: controller.signal,
+        });
+
+        console.log("[search] raw response:", res); // TEMP DEBUG - remove after fixing
+        console.log("[search] res.data:", res.data); // TEMP DEBUG - remove after fixing
+
+        setSuggestions(res.data.data || []);
+        setShowSuggestions(true);
+      } catch (err) {
+        if (err.name !== "CanceledError" && err.name !== "AbortError") {
+          console.error("[search] request failed:", err); // TEMP DEBUG - remove after fixing
+        }
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }, 500);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [query, searchOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -29,16 +74,19 @@ const Navbar = () => {
   useEffect(() => {
     if (!searchOpen) return undefined;
     const onDoc = (e) => {
-      if (!searchRef.current?.contains(e.target)) setSearchOpen(false);
+      if (!searchRef.current?.contains(e.target)) {
+        setSearchOpen(false);
+        setShowSuggestions(false);
+      }
     };
     const onKey = (e) => {
-      if (e.key === 'Escape') setSearchOpen(false);
+      if (e.key === "Escape") setSearchOpen(false);
     };
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener('mousedown', onDoc);
-      document.removeEventListener('keydown', onKey);
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
     };
   }, [searchOpen]);
 
@@ -47,6 +95,8 @@ const Navbar = () => {
     const q = query.trim();
     if (!q) return;
     setSearchOpen(false);
+    setShowSuggestions(false);
+    setSuggestions([]);
     navigate(`/trips?q=${encodeURIComponent(q)}`);
   };
 
@@ -61,7 +111,8 @@ const Navbar = () => {
               {company.name}
             </span>
             <span className="text-slate-200">
-              Reg. No: <span className="text-white font-semibold">{company.regNo}</span>
+              Reg. No:{" "}
+              <span className="text-white font-semibold">{company.regNo}</span>
             </span>
             {/* <span className="text-slate-200">
               VAT No: <span className="text-white font-semibold">{company.vatNo}</span>
@@ -83,15 +134,19 @@ const Navbar = () => {
         data-main-nav
         className={`relative transition-all duration-300 border-b ${
           isScrolled
-            ? 'bg-white/90 backdrop-blur-md shadow-premium border-slate-200/40 py-2.5'
-            : 'bg-white/95 backdrop-blur-sm border-slate-100 py-4'
+            ? "bg-white/90 backdrop-blur-md shadow-premium border-slate-200/40 py-2.5"
+            : "bg-white/95 backdrop-blur-sm border-slate-100 py-4"
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between gap-4">
           {/* Logo & Brand */}
           <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
             <div className="relative overflow-hidden rounded-xl bg-slate-50 p-1 transition-transform duration-300 group-hover:scale-105">
-              <img src={logo} alt="Him-Trail logo" className="w-10 h-10 object-contain" />
+              <img
+                src={logo}
+                alt="Him-Trail logo"
+                className="w-10 h-10 object-contain"
+              />
             </div>
             <div>
               <p className="font-display text-2xl font-semibold tracking-wide text-brand group-hover:text-brand-800 transition-colors duration-200">
@@ -108,15 +163,15 @@ const Navbar = () => {
 
           {/* Search & Dashboard CTA */}
           <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
-            <div ref={searchRef} className="flex items-center h-10">
+            <div ref={searchRef} className="relative flex items-center h-10">
               <form
                 onSubmit={submitSearch}
                 className={`h-10 flex items-center overflow-hidden rounded-full bg-slate-50 border border-slate-200 transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
                   searchOpen
-                    ? 'w-56 max-w-56 pl-4 pr-2 mr-2 opacity-100'
-                    : 'w-0 max-w-0 pl-0 pr-0 mr-0 border-transparent opacity-0 pointer-events-none'
+                    ? "w-56 max-w-56 pl-4 pr-2 mr-2 opacity-100"
+                    : "w-0 max-w-0 pl-0 pr-0 mr-0 border-transparent opacity-0 pointer-events-none"
                 }`}
-                style={{ transitionDuration: '350ms' }}
+                style={{ transitionDuration: "350ms" }}
               >
                 <input
                   ref={inputRef}
@@ -130,7 +185,7 @@ const Navbar = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      setQuery('');
+                      setQuery("");
                       inputRef.current?.focus();
                     }}
                     className="flex-shrink-0 w-6 h-6 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200/80 text-sm leading-none"
@@ -140,16 +195,56 @@ const Navbar = () => {
                   </button>
                 )}
               </form>
+              {searchOpen && showSuggestions && (
+                <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-[999]">
+                  {loadingSuggestions && (
+                    <div className="px-4 py-3 text-sm text-slate-400">
+                      Searching...
+                    </div>
+                  )}
+
+                  {!loadingSuggestions &&
+                    suggestions.length > 0 &&
+                    suggestions.map((item) => (
+                      <Link
+                        key={item._id}
+                        to={`/trip/${item.slug}`}
+                        onClick={() => {
+                          setSearchOpen(false);
+                          setShowSuggestions(false);
+                          setQuery("");
+                        }}
+                        className="block px-4 py-3 hover:bg-brand-50 transition-colors"
+                      >
+                        <p className="font-medium text-slate-800">
+                          {item.title}
+                        </p>
+
+                        <p className="text-xs text-slate-500">
+                          {item.destination}
+                        </p>
+                      </Link>
+                    ))}
+
+                  {!loadingSuggestions &&
+                    query.length >= 2 &&
+                    suggestions.length === 0 && (
+                      <div className="px-4 py-3 text-sm text-slate-400">
+                        No matching trips found.
+                      </div>
+                    )}
+                </div>
+              )}
 
               <button
                 type="button"
                 onClick={() => setSearchOpen((v) => !v)}
                 className={`nav-search-btn relative w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
                   searchOpen
-                    ? 'bg-slate-800 text-white is-open'
-                    : 'bg-slate-50 text-brand border border-slate-200 hover:bg-slate-100'
+                    ? "bg-slate-800 text-white is-open"
+                    : "bg-slate-50 text-brand border border-slate-200 hover:bg-slate-100"
                 }`}
-                aria-label={searchOpen ? 'Close search' : 'Open search'}
+                aria-label={searchOpen ? "Close search" : "Open search"}
                 aria-expanded={searchOpen}
               >
                 {!searchOpen && (
@@ -157,10 +252,10 @@ const Navbar = () => {
                 )}
                 <span
                   className={`nav-search-icon relative z-[1] text-base leading-none inline-block ${
-                    searchOpen ? 'is-close' : ''
+                    searchOpen ? "is-close" : ""
                   }`}
                 >
-                  {searchOpen ? '✕' : '⌕'}
+                  {searchOpen ? "✕" : "⌕"}
                 </span>
               </button>
             </div>
