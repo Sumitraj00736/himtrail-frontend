@@ -63,16 +63,16 @@ const Navbar = () => {
             <span className="text-slate-200">
               Reg. No: <span className="text-white font-semibold">{company.regNo}</span>
             </span>
-            <span className="text-slate-200">
+            {/* <span className="text-slate-200">
               VAT No: <span className="text-white font-semibold">{company.vatNo}</span>
-            </span>
+            </span> */}
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 md:justify-end">
             <span className="text-slate-200">
               {company.address}, {company.country}
             </span>
             <span className="font-semibold text-white hover:text-sunrise-300 transition-colors duration-200">
-              {company.mobile}
+              +977 {company.mobile}
             </span>
           </div>
         </div>
@@ -91,7 +91,7 @@ const Navbar = () => {
           {/* Logo & Brand */}
           <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
             <div className="relative overflow-hidden rounded-xl bg-slate-50 p-1 transition-transform duration-300 group-hover:scale-105">
-              <img src={logo} alt="Himtrail logo" className="w-10 h-10 object-contain" />
+              <img src={logo} alt="Him-Trail logo" className="w-10 h-10 object-contain" />
             </div>
             <div>
               <p className="font-display text-2xl font-semibold tracking-wide text-brand group-hover:text-brand-800 transition-colors duration-200">

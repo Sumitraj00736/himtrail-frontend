@@ -1,15 +1,15 @@
-import { useEffect, useState, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { Link } from 'react-router-dom';
-import { api } from '../../services/api';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
+import { Link } from "react-router-dom";
+import { api } from "../../services/api";
+import { motion, AnimatePresence } from "framer-motion";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronDown,
   faChevronRight,
   faBars,
   faXmark,
-} from '@fortawesome/free-solid-svg-icons';
+} from "@fortawesome/free-solid-svg-icons";
 
 const HOVER_CLOSE_DELAY = 450;
 const MEGA_COLS_PER_ROW = 4;
@@ -21,11 +21,11 @@ const chunk = (arr, size) => {
 };
 
 const ColumnTitle = ({ title, compact = false }) => (
-  <div className={`flex items-center gap-2 ${compact ? 'mb-2' : 'mb-2.5'}`}>
+  <div className={`flex items-center gap-2 ${compact ? "mb-2" : "mb-2.5"}`}>
     <span className="w-0.5 h-3.5 rounded-full bg-brand flex-shrink-0" />
     <p
       className={`font-bold uppercase tracking-wide text-brand leading-none ${
-        compact ? 'text-[10px]' : 'text-[11px]'
+        compact ? "text-[10px]" : "text-[11px]"
       }`}
     >
       {title}
@@ -33,11 +33,11 @@ const ColumnTitle = ({ title, compact = false }) => (
   </div>
 );
 
-const MenuLink = ({ item, onClick, variant = 'default' }) => {
-  if (variant === 'mega') {
+const MenuLink = ({ item, onClick, variant = "default" }) => {
+  if (variant === "mega") {
     return (
       <Link
-        to={item.href || '#'}
+        to={item.href || "#"}
         onClick={onClick}
         className="block py-1 text-[12.5px] leading-snug text-slate-600 hover:text-brand transition-colors duration-150 break-words"
       >
@@ -48,10 +48,12 @@ const MenuLink = ({ item, onClick, variant = 'default' }) => {
 
   return (
     <Link
-      to={item.href || '#'}
+      to={item.href || "#"}
       onClick={onClick}
       className={`group/link flex items-center gap-2 rounded-lg text-slate-600 hover:text-brand hover:bg-brand-50/60 transition-all duration-150 ${
-        variant === 'compact' ? 'px-2.5 py-1.5 text-[13px]' : 'px-3 py-2 text-sm'
+        variant === "compact"
+          ? "px-2.5 py-1.5 text-[13px]"
+          : "px-3 py-2 text-sm"
       }`}
     >
       <span className="flex-1 leading-snug">{item.label}</span>
@@ -63,30 +65,30 @@ const MenuLink = ({ item, onClick, variant = 'default' }) => {
   );
 };
 
-const ColumnLinks = ({ items, variant = 'default' }) => (
-  <ul className={variant === 'mega' ? 'space-y-0' : 'space-y-0.5'}>
+const ColumnLinks = ({ items, variant = "default", onItemClick }) => (
+  <ul className={variant === "mega" ? "space-y-0" : "space-y-0.5"}>
     {items.map((item) => (
       <li key={`${item.label}-${item.href || item.tripId}`}>
-        <MenuLink item={item} variant={variant} />
+        <MenuLink item={item} variant={variant} onClick={onItemClick} />
       </li>
     ))}
   </ul>
 );
 
-const MegaMenuColumn = ({ col }) => (
+const MegaMenuColumn = ({ col, onItemClick }) => (
   <div className="min-w-0 px-4 first:pl-0">
     <ColumnTitle title={col.title} />
-    <ColumnLinks items={col.items} variant="mega" />
+    <ColumnLinks items={col.items} variant="mega" onItemClick={onItemClick} />
   </div>
 );
 
-const MegaMenuPanel = ({ menu }) => {
+const MegaMenuPanel = ({ menu, onItemClick }) => {
   const rows = chunk(menu.columns, MEGA_COLS_PER_ROW);
 
   return (
     <div
       className="divide-y divide-slate-100"
-      style={{ maxHeight: 'min(68vh, 520px)', overflowY: 'auto' }}
+      style={{ maxHeight: "min(68vh, 520px)", overflowY: "auto" }}
     >
       {rows.map((row, rowIdx) => (
         <div
@@ -97,12 +99,16 @@ const MegaMenuPanel = ({ menu }) => {
           }}
         >
           {row.map((col) => (
-            <MegaMenuColumn key={col.title} col={col} />
+            <MegaMenuColumn
+              key={col.title}
+              col={col}
+              onItemClick={onItemClick}
+            />
           ))}
           {row.length < MEGA_COLS_PER_ROW &&
-            Array.from({ length: MEGA_COLS_PER_ROW - row.length }).map((_, i) => (
-              <div key={`empty-${i}`} aria-hidden="true" />
-            ))}
+            Array.from({ length: MEGA_COLS_PER_ROW - row.length }).map(
+              (_, i) => <div key={`empty-${i}`} aria-hidden="true" />,
+            )}
         </div>
       ))}
     </div>
@@ -119,13 +125,13 @@ const DynamicMenu = () => {
   const navRef = useRef(null);
 
   useEffect(() => {
-    api.get('/content/menus').then((res) => {
+    api.get("/content/menus").then((res) => {
       setMenus(res.data.data || []);
     });
   }, []);
 
   useEffect(() => {
-    setNavPortal(document.querySelector('[data-main-nav]'));
+    setNavPortal(document.querySelector("[data-main-nav]"));
   }, []);
 
   const openMenu = (menuId) => {
@@ -135,7 +141,10 @@ const DynamicMenu = () => {
 
   const scheduleClose = () => {
     clearTimeout(closeTimer.current);
-    closeTimer.current = setTimeout(() => setActiveMenuId(null), HOVER_CLOSE_DELAY);
+    closeTimer.current = setTimeout(
+      () => setActiveMenuId(null),
+      HOVER_CLOSE_DELAY,
+    );
   };
 
   const toggleExpand = (index) => {
@@ -144,12 +153,12 @@ const DynamicMenu = () => {
 
   useEffect(() => {
     if (mobileOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [mobileOpen]);
 
@@ -157,7 +166,7 @@ const DynamicMenu = () => {
 
   const closeMobile = () => setMobileOpen(false);
   const activeMenu = menus.find((m) => m._id === activeMenuId);
-  const activeMega = activeMenu?.style === 'mega' ? activeMenu : null;
+  const activeMega = activeMenu?.style === "mega" ? activeMenu : null;
 
   return (
     <>
@@ -165,7 +174,7 @@ const DynamicMenu = () => {
       <div className="xl:hidden flex items-center">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
           className="relative w-10 h-10 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-brand/20 hover:bg-brand-50/30 transition-all duration-200 z-50 flex items-center justify-center text-brand"
         >
@@ -189,34 +198,41 @@ const DynamicMenu = () => {
             >
               <button
                 className={`relative flex items-center gap-1.5 px-3 py-2.5 font-semibold transition-colors duration-200 ${
-                  isActive ? 'text-brand' : 'text-slate-700 hover:text-brand'
+                  isActive ? "text-brand" : "text-slate-700 hover:text-brand"
                 }`}
               >
                 {menu.label}
                 <FontAwesomeIcon
                   icon={faChevronDown}
                   className={`w-2.5 h-2.5 transition-all duration-300 ${
-                    isActive ? 'text-brand rotate-180' : 'text-slate-400'
+                    isActive ? "text-brand rotate-180" : "text-slate-400"
                   }`}
                 />
                 <span
                   className={`absolute bottom-0 left-3 right-3 h-0.5 bg-brand transition-transform duration-300 origin-left rounded-full ${
-                    isActive ? 'scale-x-100' : 'scale-x-0'
+                    isActive ? "scale-x-100" : "scale-x-0"
                   }`}
                 />
               </button>
 
-              {menu.style === 'list' && isActive && (
+              {menu.style === "list" && isActive && (
                 <div className="absolute left-0 top-full z-50">
                   <div className="bg-white rounded-b-xl shadow-premium-hover border border-t-0 border-slate-200/80 overflow-hidden w-80">
                     <div className="p-5">
                       {menu.columns.map((col, colIdx) => (
                         <div
                           key={col.title}
-                          className={colIdx > 0 ? 'mt-5 pt-5 border-t border-slate-100' : ''}
+                          className={
+                            colIdx > 0
+                              ? "mt-5 pt-5 border-t border-slate-100"
+                              : ""
+                          }
                         >
                           <ColumnTitle title={col.title} />
-                          <ColumnLinks items={col.items} />
+                          <ColumnLinks
+                            items={col.items}
+                            onItemClick={() => setActiveMenuId(null)}
+                          />
                         </div>
                       ))}
                     </div>
@@ -243,12 +259,15 @@ const DynamicMenu = () => {
                 onMouseLeave={scheduleClose}
               >
                 <div className="max-w-7xl mx-auto px-6">
-                  <MegaMenuPanel menu={activeMega} />
+                  <MegaMenuPanel
+                    menu={activeMega}
+                    onItemClick={() => setActiveMenuId(null)}
+                  />{" "}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>,
-          navPortal
+          navPortal,
         )}
 
       {/* Mobile Side Panel */}
@@ -265,19 +284,21 @@ const DynamicMenu = () => {
             />
 
             <motion.div
-              initial={{ x: '-100%' }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
+              exit={{ x: "-100%" }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="fixed top-0 left-0 bottom-0 w-[min(320px,85vw)] bg-white shadow-2xl z-[9999] overflow-y-auto flex flex-col"
-              style={{ height: '100dvh' }}
+              style={{ height: "100dvh" }}
             >
               <div className="sticky top-0 z-10 bg-premium-gradient text-white px-5 py-5 flex justify-between items-center">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.25em] text-white/60 font-semibold">
                     Explore
                   </p>
-                  <h2 className="text-lg font-display font-semibold">Navigation</h2>
+                  <h2 className="text-lg font-display font-semibold">
+                    Navigation
+                  </h2>
                 </div>
                 <button
                   onClick={closeMobile}
@@ -301,12 +322,14 @@ const DynamicMenu = () => {
                       <span>{menu.label}</span>
                       <span
                         className={`w-7 h-7 rounded-lg bg-white border border-slate-100 flex items-center justify-center transition-transform duration-300 ${
-                          expandedIndex === index ? 'rotate-180 bg-brand-50 border-brand/20' : ''
+                          expandedIndex === index
+                            ? "rotate-180 bg-brand-50 border-brand/20"
+                            : ""
                         }`}
                       >
                         <FontAwesomeIcon
                           icon={faChevronDown}
-                          className={`w-3 h-3 ${expandedIndex === index ? 'text-brand' : 'text-slate-400'}`}
+                          className={`w-3 h-3 ${expandedIndex === index ? "text-brand" : "text-slate-400"}`}
                         />
                       </span>
                     </button>
@@ -315,19 +338,29 @@ const DynamicMenu = () => {
                       {expandedIndex === index && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
+                          animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                          transition={{
+                            duration: 0.25,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
                           className="overflow-hidden"
                         >
                           <div className="px-4 pb-4 pt-1 bg-white border-t border-slate-100">
                             {menu.columns.map((col, colIdx) => (
                               <div
                                 key={col.title}
-                                className={colIdx > 0 ? 'mt-4 pt-4 border-t border-slate-50' : ''}
+                                className={
+                                  colIdx > 0
+                                    ? "mt-4 pt-4 border-t border-slate-50"
+                                    : ""
+                                }
                               >
                                 <ColumnTitle title={col.title} compact />
-                                <ColumnLinks items={col.items} variant="compact" />
+                                <ColumnLinks
+                                  items={col.items}
+                                  variant="compact"
+                                />
                               </div>
                             ))}
                           </div>
