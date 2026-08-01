@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../services/api';
 import { buildWhatsAppUrl } from '../config/company';
@@ -54,10 +54,16 @@ const WhatsAppIcon = () => (
   </svg>
 );
 
+const AUTO_SLIDE_MS = 3500;
+
 const TeamSection = () => {
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [paused, setPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
   const scrollContainerRef = useRef(null);
+  const intervalRef = useRef(null);
+  const rafRef = useRef(null);
 
   useEffect(() => {
     api
@@ -74,16 +80,74 @@ const TeamSection = () => {
   }, []);
 
   const scrollLeft = () => {
+    setPaused(true);
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({ left: -340, behavior: 'smooth' });
     }
   };
 
   const scrollRight = () => {
+    setPaused(true);
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({ left: 340, behavior: 'smooth' });
     }
   };
+
+  /* Advance one card; loop back to the start once the end is reached */
+  const advance = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const atRightEdge = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    if (atRightEdge) {
+      el.scrollTo({ left: 0, behavior: 'smooth' });
+    } else {
+      el.scrollBy({ left: 340, behavior: 'smooth' });
+    }
+  }, []);
+
+  /* ── Auto-slide engine ──
+     Runs on a fixed interval, paused on hover/touch/focus so visitors
+     stay in control the moment they show interest, and paused while
+     the section is scrolled out of view. */
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || paused || loading) return undefined;
+    if (el.scrollWidth <= el.clientWidth + 4) return undefined; // nothing to slide
+
+    intervalRef.current = setInterval(advance, AUTO_SLIDE_MS);
+    return () => clearInterval(intervalRef.current);
+  }, [advance, paused, loading, team]);
+
+  /* Progress ring feeding the play/pause button */
+  useEffect(() => {
+    if (paused || loading) {
+      setProgress(0);
+      return undefined;
+    }
+    const start = performance.now();
+    const tick = (now) => {
+      const pct = ((now - start) % AUTO_SLIDE_MS) / AUTO_SLIDE_MS;
+      setProgress(pct);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [paused, loading]);
+
+  /* Pause when the carousel scrolls out of the viewport */
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => setPaused((p) => (entry.isIntersecting ? p : true)),
+      { threshold: 0.25 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loading]);
+
+  const pause = useCallback(() => setPaused(true), []);
+  const resume = useCallback(() => setPaused(false), []);
 
   if (loading) {
     return (
@@ -126,6 +190,25 @@ const TeamSection = () => {
 
           {/* Navigation Arrows */}
           <div className="flex items-center gap-3.5 self-start sm:self-auto">
+            {/* Auto-play toggle */}
+            <button
+              onClick={() => setPaused((p) => !p)}
+              aria-label={paused ? 'Resume autoplay' : 'Pause autoplay'}
+              aria-pressed={!paused}
+              className="relative w-11 h-11 rounded-full border border-slate-200 hover:border-brand/40 bg-white text-slate-500 hover:text-brand flex items-center justify-center transition-all duration-300 shadow-sm overflow-hidden"
+            >
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 44 44">
+                <circle cx="22" cy="22" r="19" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-100" />
+                <circle
+                  cx="22" cy="22" r="19" fill="none" stroke="currentColor" strokeWidth="2"
+                  className="text-brand transition-none"
+                  strokeDasharray={2 * Math.PI * 19}
+                  strokeDashoffset={paused ? 2 * Math.PI * 19 : 2 * Math.PI * 19 * (1 - progress)}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="relative text-sm leading-none">{paused ? '▶' : '❚❚'}</span>
+            </button>
             <button
               onClick={scrollLeft}
               className="w-11 h-11 rounded-full border border-slate-200 hover:border-brand/40 bg-white text-slate-600 hover:text-brand flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm"
@@ -154,6 +237,12 @@ const TeamSection = () => {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: '-100px' }}
+          onMouseEnter={pause}
+          onMouseLeave={resume}
+          onTouchStart={pause}
+          onTouchEnd={resume}
+          onFocus={pause}
+          onBlur={resume}
           className="flex overflow-x-auto no-scrollbar gap-8 pb-6 snap-x snap-mandatory scroll-smooth px-1"
         >
           {team.map((member) => (

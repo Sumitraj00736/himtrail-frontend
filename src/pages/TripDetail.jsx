@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import { sanitizeHtml } from '../utils/richText';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import TripCard from '../components/TripCard';
 import {
   faClock,
   faArrowUpRightDots,
@@ -34,13 +35,34 @@ const TripDetail = ({ apiPath = '/trips' }) => {
   const [bookingMessage, setBookingMessage] = useState('');
   const [expandedItinerary, setExpandedItinerary] = useState([]);
   const [expandedFaq, setExpandedFaq] = useState([]);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [similarTrips, setSimilarTrips] = useState([]);
+  const [tripReviews, setTripReviews] = useState([]);
 
   useEffect(() => {
     setTrip(null);
     setNotFound(false);
     api
       .get(`${apiPath}/${slug}`)
-      .then((res) => setTrip(res.data.data))
+      .then((res) => {
+        const t = res.data.data;
+        setTrip(t);
+        // Fetch similar trips
+        if (t && t.category) {
+          api.get(`/trips?category=${t.category}`)
+             .then((simRes) => {
+               const allSims = simRes.data.data || [];
+               setSimilarTrips(allSims.filter(sim => sim._id !== t._id).slice(0, 3));
+             })
+             .catch(() => {});
+        }
+        // Fetch this trip's reviews
+        if (t && t._id) {
+          api.get(`/content/reviews?tripId=${t._id}`)
+             .then((revRes) => setTripReviews(revRes.data.data || []))
+             .catch(() => {});
+        }
+      })
       .catch(() => setNotFound(true));
   }, [slug, apiPath]);
 
@@ -122,7 +144,9 @@ const TripDetail = ({ apiPath = '/trips' }) => {
         },
       ];
 
-  const faqs = [
+  const faqs = trip.faqs?.length
+    ? trip.faqs
+    : [
     {
       question: 'What is the best season to trek? 🌤️',
       answer: 'The ideal time to trek is during Spring (March-May) or Autumn (September-November). Expect clear skies, mild temperatures, and vibrant landscapes. Avoid monsoon months to prevent slippery trails and limited visibility. 🌺🍂',
@@ -202,7 +226,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
       <div className="sticky top-[110px] z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex gap-8 text-[11px] font-bold uppercase tracking-wider text-slate-500 overflow-x-auto no-scrollbar py-4">
-            {['overview', 'itinerary', 'expect', 'dates', 'faqs', 'reviews'].map((id) => (
+            {['overview', 'itinerary', 'expect', 'map', 'dates', 'faqs', 'reviews'].map((id) => (
               <a
                 key={id}
                 href={`#${id}`}
@@ -290,8 +314,11 @@ const TripDetail = ({ apiPath = '/trips' }) => {
                 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=800&auto=format&fit=crop',
                 'https://images.unsplash.com/photo-1482192505345-5655af888cc4?q=80&w=800&auto=format&fit=crop',
               ].slice(0, 3).map((img, i) => (
-                <div key={i} className="relative h-28 md:h-36 rounded-2xl overflow-hidden group">
+                <div key={i} className="relative h-28 md:h-36 rounded-2xl overflow-hidden group cursor-pointer" onClick={() => setLightboxImage(img)}>
                   <img src={img} alt="Gallery view" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                    <span className="text-white opacity-0 group-hover:opacity-100 font-bold text-sm bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm transition-opacity duration-300">🔍 View</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -381,6 +408,27 @@ const TripDetail = ({ apiPath = '/trips' }) => {
             </div>
           </div>
 
+          {/* Map Section */}
+          {trip.mapImage && (
+            <div id="map" className="bg-white rounded-3xl p-8 border border-slate-100 shadow-premium">
+              <h3 className="text-xl font-bold text-slate-800 font-display mb-6">Trek Map</h3>
+              {trip.mapDescription && (
+                <p className="text-slate-600 text-sm md:text-base leading-relaxed mb-6">{trip.mapDescription}</p>
+              )}
+              <div 
+                className="relative rounded-2xl overflow-hidden cursor-pointer group border border-slate-100"
+                onClick={() => setLightboxImage(trip.mapImage)}
+              >
+                <img src={trip.mapImage} alt="Trek Map" className="w-full h-auto max-h-[400px] object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 flex items-center justify-center">
+                  <span className="text-white opacity-0 group-hover:opacity-100 font-bold text-sm bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm transition-opacity duration-300 flex items-center gap-2">
+                    <span>🔍</span> Click to Zoom Map
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Dates & Price section */}
           <div id="dates" className="bg-white rounded-3xl p-8 border border-slate-100 shadow-premium">
             <h3 className="text-xl font-bold text-slate-800 font-display mb-6">Upcoming Dates</h3>
@@ -444,7 +492,7 @@ const TripDetail = ({ apiPath = '/trips' }) => {
                         isOpen ? 'max-h-96 py-5 border-t border-slate-100' : 'max-h-0 py-0'
                       }`}
                     >
-                      <p className="text-slate-600 text-xs md:text-sm leading-relaxed">{faq.answer}</p>
+                      <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeHtml(faq.answer) }} />
                     </div>
                   </div>
                 );
@@ -500,38 +548,96 @@ const TripDetail = ({ apiPath = '/trips' }) => {
         </div>
       </section>
 
-      {/* Testimonials loop banner */}
-      <section id="reviews" className="reveal reveal-up bg-slate-100/50 py-16 overflow-hidden border-t border-slate-200/40">
-        <div className="max-w-6xl mx-auto px-6 mb-8 text-center sm:text-left">
-          <h2 className="text-2xl font-bold font-display text-slate-800">What travelers say</h2>
-        </div>
-        
-        <div className="relative">
-          <div className="flex gap-6 animate-scroll whitespace-nowrap">
-            {[
-              { name: "John Doe", rating: 5, comment: "Amazing experience! The trek was well organized and the guide was fantastic.", avatar: "https://randomuser.me/api/portraits/men/32.jpg" },
-              { name: "Jane Smith", rating: 4, comment: "Beautiful scenery and smooth itinerary. Food and lodging were comfortable.", avatar: "https://randomuser.me/api/portraits/women/44.jpg" },
-              { name: "Michael Lee", rating: 5, comment: "Highly recommend! Everything was perfectly arranged, from flights to local tours.", avatar: "https://randomuser.me/api/portraits/men/54.jpg" },
-              { name: "Emily Davis", rating: 5, comment: "Great adventure, loved every moment. The guides were super helpful and friendly.", avatar: "https://randomuser.me/api/portraits/women/65.jpg" },
-              { name: "Robert Brown", rating: 5, comment: "A once-in-a-lifetime trek! Smooth organization and amazing views.", avatar: "https://randomuser.me/api/portraits/men/22.jpg" },
-            ].map((review, idx) => (
-              <div
-                key={idx}
-                className="inline-block w-80 bg-white rounded-3xl shadow-premium border border-slate-100 p-6 whitespace-normal"
-              >
-                <div className="flex items-center gap-4">
-                  <img src={review.avatar} alt={review.name} className="w-10 h-10 rounded-full object-cover" />
-                  <div>
-                    <h5 className="font-bold text-slate-800 text-xs">{review.name}</h5>
-                    <div className="text-amber-500 text-[10px] mt-0.5">{"★".repeat(review.rating)}</div>
+      {/* Testimonials section — only shown when there are real reviews */}
+      {tripReviews.length > 0 && (
+        <section id="reviews" className="reveal reveal-up bg-slate-100/50 py-16 overflow-hidden border-t border-slate-200/40">
+          <div className="max-w-6xl mx-auto px-6 mb-8 text-center sm:text-left">
+            <h2 className="text-2xl font-bold font-display text-slate-800">What travelers say</h2>
+            <p className="text-slate-500 text-sm mt-1">{tripReviews.length} review{tripReviews.length > 1 ? 's' : ''} for this trip</p>
+          </div>
+          <div className="relative">
+            <div className={`${tripReviews.length > 2 ? 'flex gap-6 animate-scroll whitespace-nowrap' : 'max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-6'}`}>
+              {tripReviews.map((review, idx) => (
+                <div
+                  key={review._id || idx}
+                  className={`${tripReviews.length > 2 ? 'inline-block w-80 whitespace-normal' : ''} bg-white rounded-3xl shadow-premium border border-slate-100 p-6`}
+                >
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center text-brand font-bold text-sm flex-shrink-0">
+                      {review.authorName?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                    <div className="flex-grow min-w-0">
+                      <h5 className="font-bold text-slate-800 text-xs truncate">{review.authorName}</h5>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-amber-500 text-[10px]">{"★".repeat(review.rating)}<span className="text-slate-200">{"★".repeat(5 - review.rating)}</span></span>
+                        {review.source && <span className="text-[10px] text-slate-400 font-medium">· {review.source}</span>}
+                      </div>
+                    </div>
                   </div>
+                  {review.title && <p className="text-slate-700 font-semibold text-xs mb-1">{review.title}</p>}
+                  <p className="text-slate-500 text-xs leading-relaxed">"{review.body}"</p>
+                  {review.publishedDate && <p className="text-slate-300 text-[10px] mt-3">{review.publishedDate}</p>}
                 </div>
-                <p className="text-slate-500 text-xs mt-3 leading-relaxed">"{review.comment}"</p>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Similar Trips Section */}
+      {similarTrips.length > 0 && (
+        <section className="max-w-6xl mx-auto px-6 py-16 border-t border-slate-200/40">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 flex-shrink-0 bg-brand/5 border border-brand/20 rounded-2xl flex items-center justify-center text-brand text-xl">
+                <FontAwesomeIcon icon={faStreetView} />
               </div>
+              <div>
+                <h2 className="text-2xl font-bold font-display text-slate-800 uppercase tracking-tight">SIMILAR TRIPS</h2>
+                <p className="text-slate-500 font-medium">You May Also Like</p>
+              </div>
+            </div>
+            <button className="px-6 py-2.5 rounded-full border-2 border-sunrise-500 text-sunrise-600 font-bold text-sm hover:bg-sunrise-500 hover:text-white transition-colors" onClick={() => navigate('/trips')}>
+              Explore more →
+            </button>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {similarTrips.map(t => (
+              <TripCard key={t._id} trip={t} />
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Full-screen Image Lightbox */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 md:p-8 cursor-zoom-out"
+            onClick={() => setLightboxImage(null)}
+          >
+            <button
+              className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-colors font-bold text-xl backdrop-blur-md"
+              onClick={() => setLightboxImage(null)}
+            >
+              ✕
+            </button>
+            <motion.img
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              src={lightboxImage}
+              alt="Expanded view"
+              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()} 
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Stepped Booking Modal */}
       <AnimatePresence>

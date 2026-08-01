@@ -8,6 +8,7 @@ const emptyForm = () => ({
   rating: 5,
   source: 'Google',
   publishedDate: '',
+  trip: '',
 });
 
 const SOURCES = ['Google', 'TripAdvisor', 'Trustpilot', 'Facebook', 'Website', 'Other'];
@@ -36,6 +37,7 @@ const Stars = ({ value, onChange, size = 'md' }) => {
 
 const ReviewsAdmin = () => {
   const [items, setItems] = useState([]);
+  const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -49,8 +51,12 @@ const ReviewsAdmin = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/dashboard/reviews');
+      const [res, tripsRes] = await Promise.all([
+        api.get('/dashboard/reviews'),
+        api.get('/trips')
+      ]);
       setItems(res.data.data || []);
+      setTrips(tripsRes.data.data || []);
     } catch {
       setError('Failed to load reviews');
     } finally {
@@ -106,6 +112,7 @@ const ReviewsAdmin = () => {
       rating: item.rating || 5,
       source: item.source || 'Google',
       publishedDate: item.publishedDate || '',
+      trip: item.trip || '',
     });
     setError('');
     setShowForm(true);
@@ -251,25 +258,37 @@ const ReviewsAdmin = () => {
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-brand/20 bg-white"
                 >
                   {SOURCES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
+                    <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                Title
-              </label>
-              <input
-                required
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Amazing trek experience"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-brand/20"
-              />
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Related Trip (Optional)
+                </label>
+                <select
+                  value={form.trip}
+                  onChange={(e) => setForm({ ...form, trip: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-brand/20 bg-white"
+                >
+                  <option value="">-- General Site Review --</option>
+                  {trips.map((t) => (
+                    <option key={t._id} value={t._id}>{t.title}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Title
+                </label>
+                <input
+                  required
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Amazing trek experience"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-brand/20"
+                />
+              </div>
             </div>
 
             <div>

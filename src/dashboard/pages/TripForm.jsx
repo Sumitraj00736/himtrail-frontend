@@ -34,6 +34,9 @@ const EMPTY_FORM = {
   included: [''],
   excluded: [''],
   dates: [{ startDate: '', endDate: '', status: '', price: '' }],
+  mapImage: '',
+  mapDescription: '',
+  faqs: [{ question: '', answer: '' }],
   displaySections: [],
 };
 
@@ -208,6 +211,9 @@ const TripForm = () => {
           included: t.included?.length ? t.included : [''],
           excluded: t.excluded?.length ? t.excluded : [''],
           dates: t.dates?.length ? t.dates : [{ startDate: '', endDate: '', status: '', price: '' }],
+          mapImage: t.mapImage || '',
+          mapDescription: t.mapDescription || '',
+          faqs: t.faqs?.length ? t.faqs : [{ question: '', answer: '' }],
           displaySections: t.displaySections || [],
         });
       })
@@ -566,6 +572,21 @@ const TripForm = () => {
           </section>
         </div>
 
+        {/* ── Map ── */}
+        <section className="bg-slate-50 border border-slate-200 rounded-3xl p-6 space-y-4">
+          <h2 className="font-bold text-slate-700 text-base mb-2">Trek / Tour Map</h2>
+          <Field label="Map Image">
+            <ImageUploader
+              value={form.mapImage}
+              onChange={(url) => setForm({ ...form, mapImage: url })}
+              label="Upload Map Image"
+            />
+          </Field>
+          <Field label="Map Description">
+            <textarea className={textareaCls} rows={2} value={form.mapDescription} placeholder="Brief description of the map/route..." onChange={(e) => setForm({ ...form, mapDescription: e.target.value })} />
+          </Field>
+        </section>
+
         {/* ── Departure Dates ── */}
         <section className="bg-slate-50 border border-slate-200 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-4">
@@ -595,6 +616,40 @@ const TripForm = () => {
                   const dates = form.dates.filter((_, i) => i !== idx);
                   setForm({ ...form, dates: dates.length ? dates : [{ startDate: '', endDate: '', status: '', price: '' }] });
                 }}>✕</button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── FAQs ── */}
+        <section className="bg-slate-50 border border-slate-200 rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-slate-700 text-base">FAQs</h2>
+            <button type="button" onClick={() => setForm({ ...form, faqs: [...form.faqs, { question: '', answer: '' }] })} className="text-xs font-bold text-brand hover:underline">+ Add FAQ</button>
+          </div>
+          <div className="space-y-4">
+            {form.faqs.map((faq, idx) => (
+              <div key={idx} className="relative bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+                <button type="button" className="absolute top-3 right-4 text-red-400 hover:text-red-600 text-xs font-bold" onClick={() => {
+                  const faqs = form.faqs.filter((_, i) => i !== idx);
+                  setForm({ ...form, faqs: faqs.length ? faqs : [{ question: '', answer: '' }] });
+                }}>✕ Remove</button>
+                <Field label={`Question ${idx + 1}`}>
+                  <input className={inputCls} value={faq.question} placeholder="What is the best season to trek?" onChange={(e) => {
+                    const faqs = form.faqs.map((x, i) => i === idx ? { ...x, question: e.target.value } : x);
+                    setForm({ ...form, faqs });
+                  }} />
+                </Field>
+                <Field label={`Answer ${idx + 1}`}>
+                  <RichTextEditor
+                    value={faq.answer}
+                    onChange={(html) => {
+                      const faqs = form.faqs.map((x, i) => i === idx ? { ...x, answer: html } : x);
+                      setForm({ ...form, faqs });
+                    }}
+                    placeholder="The best season is..."
+                  />
+                </Field>
               </div>
             ))}
           </div>

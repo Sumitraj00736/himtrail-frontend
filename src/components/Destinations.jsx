@@ -1,15 +1,7 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faClock,
-  faArrowUpRightDots,
-  faLocationDot,
-  faMountainSun,
-  faStreetView,
-  faArrowsDownToPeople,
-} from "@fortawesome/free-solid-svg-icons";
+import { CarouselArrow } from './ScrollCarousel';
 
 /* ─── Region config ─────────────────────────────────────────── */
 const REGION_CONFIG = {
@@ -29,10 +21,10 @@ const DEFAULT_COLORS = { from: '#1a3a5c', to: '#2d6a9f', icon: '📍' };
 /* ─── Section pill shown on card ───────────────────────────── */
 const SectionPill = ({ label }) => (
   <span
-    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm ${
       label === 'Trek in Nepal'
-        ? 'bg-emerald-400/20 text-emerald-100'
-        : 'bg-amber-400/20 text-amber-100'
+        ? 'bg-emerald-400/20 text-emerald-100 ring-1 ring-emerald-300/30'
+        : 'bg-amber-400/20 text-amber-100 ring-1 ring-amber-300/30'
     }`}
   >
     {label === 'Trek in Nepal' ? '🏔️' : '✨'} {label}
@@ -51,7 +43,8 @@ const DestinationCard = ({ item }) => {
   return (
     <Link
       to={href}
-      className="group relative flex-shrink-0 w-72 h-80 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 cursor-pointer"
+      data-carousel-item
+      className="group relative flex-shrink-0 w-72 h-80 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 cursor-pointer ring-1 ring-black/5 snap-start"
       style={{ background: `linear-gradient(145deg, ${cfg.from}, ${cfg.to})` }}
     >
       {/* Background image */}
@@ -59,11 +52,15 @@ const DestinationCard = ({ item }) => {
         <img
           src={item.heroImage}
           alt={item.title}
+          loading="lazy"
           className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-60 group-hover:scale-105 transition-all duration-700"
         />
       )}
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+      {/* Sheen sweep on hover */}
+      <div className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[1200ms] ease-out bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
       {/* Top badges */}
       <div className="absolute top-4 left-4 right-4 flex items-start justify-between">
@@ -120,10 +117,92 @@ const DestinationCard = ({ item }) => {
 };
 
 /* ─── Main section ──────────────────────────────────────────── */
+const AUTO_SLIDE_MS = 3500;
+
 const Destinations = () => {
-  const [items, setItems]   = useState([]);
+  const [items, setItems]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All');
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd]     = useState(false);
+  const [paused, setPaused]   = useState(false);
+  const [progress, setProgress] = useState(0); // 0-1, drives the active dot's fill
+
+  const scrollRef   = useRef(null);
+  const intervalRef = useRef(null);
+  const rafRef       = useRef(null);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 4);
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+  }, []);
+
+  const scrollBy = useCallback((dir) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.querySelector('[data-carousel-item]');
+    const step = card ? card.getBoundingClientRect().width + 24 : 320;
+    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+  }, []);
+
+  /* Advance one card; loop back to start once the end is reached */
+  const advance = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atRightEdge = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    if (atRightEdge) {
+      el.scrollTo({ left: 0, behavior: 'smooth' });
+    } else {
+      scrollBy(1);
+    }
+  }, [scrollBy]);
+
+  /* ── Auto-slide engine ──
+     Runs on a fixed interval, paused on hover/touch/focus so visitors
+     stay in control the moment they show interest. Also pauses while
+     the section is scrolled out of view. */
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || paused || loading) return undefined;
+    if (el.scrollWidth <= el.clientWidth + 4) return undefined; // nothing to slide
+
+    intervalRef.current = setInterval(advance, AUTO_SLIDE_MS);
+    return () => clearInterval(intervalRef.current);
+  }, [advance, paused, loading, activeTab, items]);
+
+  /* Lightweight progress ring for the "next slide" affordance */
+  useEffect(() => {
+    if (paused || loading) {
+      setProgress(0);
+      return undefined;
+    }
+    const start = performance.now();
+    const tick = (now) => {
+      const pct = ((now - start) % AUTO_SLIDE_MS) / AUTO_SLIDE_MS;
+      setProgress(pct);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [paused, loading, activeTab]);
+
+  /* Pause on hover/touch/focus-within, resume on leave */
+  const pause  = useCallback(() => setPaused(true), []);
+  const resume = useCallback(() => setPaused(false), []);
+
+  /* Pause when the carousel scrolls out of the viewport */
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => setPaused((p) => (entry.isIntersecting ? p : true)),
+      { threshold: 0.25 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [activeTab, loading]);
 
   useEffect(() => {
     api.get('/content/destinations')
@@ -172,12 +251,36 @@ const Destinations = () => {
               </h2>
             </div>
           </div>
-          <Link
-            to="/trips"
-            className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 self-start sm:self-auto hover:-translate-y-0.5"
-          >
-            View All Trips →
-          </Link>
+          <div className="flex items-center gap-3">
+            {/* Auto-play toggle */}
+            <button
+              onClick={() => setPaused((p) => !p)}
+              aria-label={paused ? 'Resume autoplay' : 'Pause autoplay'}
+              aria-pressed={!paused}
+              className="relative w-10 h-10 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:text-brand hover:border-brand transition-colors duration-300 overflow-hidden"
+            >
+              {/* progress ring */}
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-100" />
+                <circle
+                  cx="20" cy="20" r="17" fill="none" stroke="currentColor" strokeWidth="2"
+                  className="text-brand transition-none"
+                  strokeDasharray={2 * Math.PI * 17}
+                  strokeDashoffset={paused ? 2 * Math.PI * 17 : 2 * Math.PI * 17 * (1 - progress)}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="relative text-sm leading-none">{paused ? '▶' : '❚❚'}</span>
+            </button>
+            <CarouselArrow dir="prev" onClick={() => { pause(); scrollBy(-1); }} disabled={atStart} />
+            <CarouselArrow dir="next" onClick={() => { pause(); scrollBy(1); }} disabled={atEnd} />
+            <Link
+              to="/trips"
+              className="px-6 py-3 rounded-full border border-slate-200 hover:border-brand hover:text-brand bg-white font-semibold text-xs tracking-wider uppercase transition-all duration-300 self-start sm:self-auto hover:-translate-y-0.5"
+            >
+              View All Trips →
+            </Link>
+          </div>
         </div>
 
         {/* ── Region tabs (same as menu) ── */}
@@ -190,7 +293,7 @@ const Destinations = () => {
               return (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => { setActiveTab(tab); setPaused(false); }}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold flex-shrink-0 transition-all duration-200 ${
                     isActive
                       ? 'text-white shadow-md scale-105'
@@ -228,7 +331,15 @@ const Destinations = () => {
         ) : (
           <div
             key={activeTab}
-            className="flex gap-6 overflow-x-auto no-scrollbar pb-4 -mx-6 px-6"
+            ref={scrollRef}
+            onScroll={onScroll}
+            onMouseEnter={pause}
+            onMouseLeave={resume}
+            onTouchStart={pause}
+            onTouchEnd={resume}
+            onFocus={pause}
+            onBlur={resume}
+            className="relative flex gap-6 overflow-x-auto no-scrollbar pb-4 -mx-6 px-6 scroll-smooth snap-x snap-proximity"
             style={{ animation: 'fadeIn 0.3s ease' }}
           >
             {visible.map((item) => (
