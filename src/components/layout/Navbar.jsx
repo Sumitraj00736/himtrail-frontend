@@ -11,10 +11,12 @@ const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const searchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
   const inputRef = useRef(null);
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -39,6 +41,7 @@ const Navbar = () => {
 
         setSuggestions(res.data.data || []);
         setShowSuggestions(true);
+        setHighlightedSuggestion(-1);
       } catch (err) {
         if (err.name !== "CanceledError" && err.name !== "AbortError") {
           console.error("Search suggestions request failed:", err);
@@ -54,6 +57,29 @@ const Navbar = () => {
     };
   }, [query, searchOpen]);
 
+  const selectSuggestion = (item) => {
+    setSearchOpen(false);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setQuery("");
+    navigate(`/trips/${item.slug}`);
+  };
+
+  const handleSuggestionKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedSuggestion((current) => (current + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedSuggestion((current) => (current - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter" && highlightedSuggestion >= 0) {
+      e.preventDefault();
+      selectSuggestion(suggestions[highlightedSuggestion]);
+    }
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -64,14 +90,18 @@ const Navbar = () => {
 
   useEffect(() => {
     if (!searchOpen) return undefined;
-    const t = setTimeout(() => inputRef.current?.focus(), 220);
+    const t = setTimeout(() => {
+      if (window.matchMedia("(min-width: 1280px)").matches) {
+        inputRef.current?.focus();
+      }
+    }, 220);
     return () => clearTimeout(t);
   }, [searchOpen]);
 
   useEffect(() => {
     if (!searchOpen) return undefined;
     const onDoc = (e) => {
-      if (!searchRef.current?.contains(e.target)) {
+      if (!searchRef.current?.contains(e.target) && !mobileSearchRef.current?.contains(e.target)) {
         setSearchOpen(false);
         setShowSuggestions(false);
       }
@@ -155,8 +185,94 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* Dynamic Dropdown Menus */}
-          <DynamicMenu />
+          {/* Navigation and mobile controls */}
+          <div className="flex items-center gap-2">
+            <DynamicMenu />
+
+            {/* Mobile Search */}
+            <div ref={mobileSearchRef} className="xl:hidden relative flex items-center">
+            <button
+              type="button"
+              onClick={() => setSearchOpen((v) => !v)}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-200 ${
+                searchOpen
+                  ? "bg-slate-800 text-white border-slate-800"
+                  : "bg-white text-brand border-slate-200 shadow-sm hover:border-brand/30"
+              }`}
+              aria-label={searchOpen ? "Close search" : "Open search"}
+              aria-expanded={searchOpen}
+            >
+              <span className="text-base leading-none">{searchOpen ? "✕" : "⌕"}</span>
+            </button>
+
+            {searchOpen && (
+              <form
+                onSubmit={submitSearch}
+                className="absolute top-full right-0 mt-3 w-[calc(100vw-2rem)] max-w-96 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl z-[1000]"
+              >
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                  <input
+                    autoFocus
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleSuggestionKeyDown}
+                    className="w-full min-w-0 bg-transparent text-sm text-slate-800 outline-none placeholder-slate-400"
+                    placeholder="Search trek name..."
+                    aria-label="Search trek name"
+                  />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={() => setQuery("")}
+                      className="flex-shrink-0 text-slate-400 hover:text-slate-700"
+                      aria-label="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {showSuggestions && (
+                  <div className="mt-2 max-h-80 overflow-y-auto rounded-xl border border-slate-200">
+                    {loadingSuggestions && (
+                      <div className="flex items-center gap-2 px-4 py-4 text-sm text-slate-400">
+                        <span className="w-3.5 h-3.5 rounded-full border-2 border-brand/20 border-t-brand animate-spin" />
+                        Searching treks...
+                      </div>
+                    )}
+                    {!loadingSuggestions && suggestions.length > 0 && suggestions.map((item) => (
+                      <Link
+                        key={item._id}
+                        to={`/trips/${item.slug}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          selectSuggestion(item);
+                        }}
+                        onMouseEnter={() => setHighlightedSuggestion(suggestions.indexOf(item))}
+                        className={`flex items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0 transition-colors ${highlightedSuggestion === suggestions.indexOf(item) ? "bg-brand-50" : "hover:bg-slate-50"}`}
+                      >
+                        {item.heroImage ? (
+                          <img src={item.heroImage} alt="" className="h-11 w-14 shrink-0 rounded-lg object-cover" />
+                        ) : (
+                          <div className="h-11 w-14 shrink-0 rounded-lg bg-brand/10" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-800">{item.title}</p>
+                          <p className="mt-0.5 truncate text-xs text-slate-500">
+                            {[item.destination || item.region, item.category].filter(Boolean).join(" · ") || "Adventure trip"}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                    {!loadingSuggestions && query.length >= 2 && suggestions.length === 0 && (
+                      <div className="px-4 py-4 text-sm text-slate-400">No matching treks found. Try a destination or activity.</div>
+                    )}
+                  </div>
+                )}
+              </form>
+            )}
+            </div>
+          </div>
 
           {/* Search & Dashboard CTA */}
           <div className="hidden xl:flex items-center gap-3 flex-shrink-0">
@@ -174,6 +290,7 @@ const Navbar = () => {
                   ref={inputRef}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleSuggestionKeyDown}
                   className="w-full min-w-0 text-xs bg-transparent outline-none ring-0 border-0 focus:outline-none focus:ring-0 text-slate-800 placeholder-slate-400"
                   placeholder="I am looking for..."
                   tabIndex={searchOpen ? 0 : -1}
@@ -193,11 +310,17 @@ const Navbar = () => {
                 )}
               </form>
               {searchOpen && showSuggestions && (
-                <div className="absolute top-full left-0 mt-2 w-72 max-h-80 overflow-y-auto bg-white rounded-xl shadow-xl border border-slate-200 z-[999]">
+                  <div className="absolute top-full left-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-xl border border-slate-200 z-[999]">
+                    {!loadingSuggestions && suggestions.length > 0 && (
+                      <div className="px-4 py-2 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        {suggestions.length} matching trek{suggestions.length === 1 ? "" : "s"}
+                      </div>
+                    )}
                   {loadingSuggestions && (
-                    <div className="px-4 py-3 text-sm text-slate-400">
-                      Searching...
-                    </div>
+                      <div className="flex items-center gap-2 px-4 py-4 text-sm text-slate-400">
+                        <span className="w-3.5 h-3.5 rounded-full border-2 border-brand/20 border-t-brand animate-spin" />
+                        Searching treks...
+                      </div>
                   )}
 
                   {!loadingSuggestions &&
@@ -206,29 +329,31 @@ const Navbar = () => {
                       <Link
                         key={item._id}
                         to={`/trips/${item.slug}`}
-                        onClick={() => {
-                          setSearchOpen(false);
-                          setShowSuggestions(false);
-                          setQuery("");
+                        onClick={(e) => {
+                          e.preventDefault();
+                          selectSuggestion(item);
                         }}
-                        className="block px-4 py-3 hover:bg-brand-50 transition-colors"
+                        onMouseEnter={() => setHighlightedSuggestion(suggestions.indexOf(item))}
+                        className={`flex items-center gap-3 px-4 py-3 transition-colors ${highlightedSuggestion === suggestions.indexOf(item) ? "bg-brand-50" : "hover:bg-slate-50"}`}
                       >
-                        <p className="font-medium text-slate-800">
-                          {item.title}
-                        </p>
-
-                        <p className="text-xs text-slate-500">
-                          {item.destination}
-                        </p>
+                        {item.heroImage ? (
+                          <img src={item.heroImage} alt="" className="h-11 w-14 shrink-0 rounded-lg object-cover" />
+                        ) : (
+                          <div className="h-11 w-14 shrink-0 rounded-lg bg-brand/10" />
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-slate-800">{item.title}</p>
+                          <p className="mt-0.5 truncate text-xs text-slate-500">
+                            {[item.destination || item.region, item.category].filter(Boolean).join(" · ") || "Adventure trip"}
+                          </p>
+                        </div>
                       </Link>
                     ))}
 
                   {!loadingSuggestions &&
                     query.length >= 2 &&
                     suggestions.length === 0 && (
-                      <div className="px-4 py-3 text-sm text-slate-400">
-                        No matching trips found.
-                      </div>
+                      <div className="px-4 py-4 text-sm text-slate-400">No matching treks found. Try a destination or activity.</div>
                     )}
                 </div>
               )}
