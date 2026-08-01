@@ -80,7 +80,8 @@ const Navbar = () => {
 
       {/* Main Navbar */}
       <div
-        className={`transition-all duration-300 border-b ${
+        data-main-nav
+        className={`relative transition-all duration-300 border-b ${
           isScrolled
             ? 'bg-white/90 backdrop-blur-md shadow-premium border-slate-200/40 py-2.5'
             : 'bg-white/95 backdrop-blur-sm border-slate-100 py-4'
